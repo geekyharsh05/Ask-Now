@@ -24,7 +24,7 @@ interface AuthState {
   isAuthenticated: boolean;
   
   // Actions
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token?: string) => void;
   clearAuth: () => void;
   updateUser: (user: Partial<User>) => void;
 }
@@ -38,15 +38,17 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       // Set authentication data (after login/signup)
-      setAuth: (user: User, token: string) => {
-        // Store in cookies for middleware access
-        setCookie('auth-token', token);
-        setCookie('user-id', user.id);
+      setAuth: (user: User, token?: string) => {
+        // Store in cookies for middleware access (only if token exists)
+        if (token) {
+          setCookie('auth-token', token);
+        }
+        setCookie('user-id', user.id.toString());
         
         set({
           user,
-          token,
-          isAuthenticated: true,
+          token: token || null,
+          isAuthenticated: !!token, // Only set as authenticated if we have a token
         });
       },
 
@@ -87,7 +89,7 @@ export const useAuthStore = create<AuthState>()(
         if (state?.token && typeof window !== 'undefined') {
           setCookie('auth-token', state.token);
           if (state.user?.id) {
-            setCookie('user-id', state.user.id);
+            setCookie('user-id', state.user.id.toString());
           }
         }
       },

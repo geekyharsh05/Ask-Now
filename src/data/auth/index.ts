@@ -1,7 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { SignInSchema, SignUpSchema } from "@/validators/auth-schema";
 
-// Create axios instance with base configuration
 const authApi = axios.create({
   baseURL: "http://localhost:8080/api/auth",
   headers: {
@@ -10,46 +9,67 @@ const authApi = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Request interceptor to add auth token if available
-authApi.interceptors.request.use((config) => {
-  // Get token from cookies (for SSR compatibility)
-  if (typeof window !== 'undefined') {
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth-token='))
-      ?.split('=')[1];
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
 
 // Response interceptor for error handling
 authApi.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    if (error.response?.status === 409) {
+      // Handle conflict errors (e.g., email/username already exists)
+      const errorData = error.response.data as ErrorResponse;
+      throw new Error(errorData.message || "Email or username already exists");
+    }
+    
+    if (error.response?.status === 400) {
+      // Handle validation errors
+      const errorData = error.response.data as ErrorResponse;
+      throw new Error(errorData.message || "Invalid input data");
+    }
+    
+    if (error.response?.status === 401) {
+      // Handle authentication errors
+      const errorData = error.response.data as ErrorResponse;
+      throw new Error(errorData.message || "Invalid credentials");
+    }
+    
+    if (error.response?.status === 500) {
+      // Handle server errors
+      throw new Error("Server error. Please try again later.");
+    }
+    
     if (error.response?.data) {
       throw new Error((error.response.data as ErrorResponse).message || "Request failed");
     }
+    
     throw new Error(error.message || "Network error");
   }
 );
 
 // Types for API responses
 export interface User {
-  id: string;
-  name: string;
+  id: number;
   username: string;
   email: string;
+  password: string;
+  name: string;
   role: "RESPONDENT" | "CREATOR";
+  createdAt: string;
 }
 
 export interface AuthResponse {
   user: User;
   token: string;
-  message: string;
+  message?: string;
+}
+
+export interface SignUpResponse {
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  name: string;
+  role: "RESPONDENT" | "CREATOR";
+  createdAt: string;
 }
 
 export interface ErrorResponse {
@@ -58,8 +78,8 @@ export interface ErrorResponse {
 }
 
 // Sign Up API function
-export async function signUp(data: SignUpSchema): Promise<AuthResponse> {
-  const response = await authApi.post<AuthResponse>("/register", data);
+export async function signUp(data: SignUpSchema): Promise<SignUpResponse> {
+  const response = await authApi.post<SignUpResponse>("/register", data);
   return response.data;
 }
 
