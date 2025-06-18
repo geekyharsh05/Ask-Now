@@ -1,0 +1,130 @@
+"use client";
+
+import Link from "next/link";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { signInInput, SignInSchema } from "@/validators/auth-schema";
+import { useSignIn } from "@/data/auth/hooks";
+
+export default function SignInForm() {
+  const signInMutation = useSignIn();
+
+  const form = useForm<SignInSchema>({
+    resolver: zodResolver(signInInput),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values: SignInSchema) {
+    signInMutation.mutate(values);
+  }
+
+  return (
+    <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>
+            Enter your email and password to login to your account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid gap-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel htmlFor="username">Username</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="username"
+                          placeholder="johndoe"
+                          type="username"
+                          autoComplete="username"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <div className="flex justify-between items-center">
+                        <FormLabel htmlFor="password">Password</FormLabel>
+                        <Link
+                          href="#"
+                          className="ml-auto inline-block text-sm underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
+                      <FormControl>
+                        <PasswordInput
+                          id="password"
+                          placeholder="******"
+                          autoComplete="current-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={signInMutation.isPending}
+                >
+                  {signInMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+          <div className="mt-4 text-center text-sm">
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="underline">
+              Sign up
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
