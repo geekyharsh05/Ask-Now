@@ -62,7 +62,7 @@ export default function SignUpForm() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="name">Full Name</FormLabel>
+                      <FormLabel htmlFor="name">Name</FormLabel>
                       <FormControl>
                         <Input
                           id="name"

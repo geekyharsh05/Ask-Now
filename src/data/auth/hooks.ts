@@ -1,11 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, signUp, signOut } from "./index";
+import { signIn, signUp, signOut, User } from "./index";
 import { useAuthStore } from "@/store/auth-store";
-import { SignInSchema, SignUpSchema } from "@/validators/auth-schema";
 
-// Sign In Mutation Hook
 export function useSignIn() {
   const { setAuth } = useAuthStore();
   const router = useRouter();
@@ -13,22 +11,16 @@ export function useSignIn() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["auth", "signIn"],
     mutationFn: signIn,
     onSuccess: (data) => {
-      // Update Zustand store
       setAuth(data.user, data.token);
       
-      // Clear any cached queries if needed
       queryClient.invalidateQueries();
       
-      // Show success message
       toast.success("Successfully signed in!");
       
-      // Get callback URL from search params or default to dashboard
-      const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
-      
-      // Redirect to the intended page or dashboard
-      router.push(callbackUrl);
+      router.push("/dashboard");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Sign in failed. Please try again.");
@@ -36,26 +28,35 @@ export function useSignIn() {
   });
 }
 
-// Sign Up Mutation Hook
 export function useSignUp() {
   const { setAuth } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["auth", "signUp"],
     mutationFn: signUp,
     onSuccess: (data) => {
-      // Update Zustand store
-      setAuth(data.user, data.token);
+      // Convert SignUpResponse to User format
+      const user: User = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        role: data.role,
+        createdAt: data.createdAt
+      };
       
-      // Clear any cached queries if needed
+      // For signup, we don't get a token, so we'll set auth without token
+      // The user will need to sign in after signup to get a token
+      setAuth(user, undefined);
+      
       queryClient.invalidateQueries();
       
-      // Show success message
-      toast.success("Account created successfully! Welcome!");
-      
-      // Redirect to dashboard or home
-      router.push("/dashboard");
+      toast.success("Account created successfully! Please sign in to continue.");
+
+      router.push("/signin");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Sign up failed. Please try again.");
@@ -63,25 +64,21 @@ export function useSignUp() {
   });
 }
 
-// Sign Out Mutation Hook
 export function useSignOut() {
   const { clearAuth } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["auth", "signOut"],
     mutationFn: signOut,
     onSuccess: () => {
-      // Clear Zustand store
       clearAuth();
       
-      // Clear all cached queries
       queryClient.clear();
       
-      // Show success message
       toast.success("Successfully signed out!");
-      
-      // Redirect to sign in page
+
       router.push("/signin");
     },
     onError: (error: Error) => {
