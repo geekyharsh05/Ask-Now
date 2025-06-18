@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "AskNow",
@@ -22,14 +24,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bricolage antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Toaster richColors theme="dark" />
+            {children}
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
