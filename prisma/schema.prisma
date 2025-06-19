@@ -14,16 +14,18 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  name          String
-  emailVerified Boolean
-  image         String?
-  role          UserRole 
-  sessions      Session[]
-  accounts      Account[]
+  id             String           @id @default(uuid())
+  email          String           @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  name           String
+  emailVerified  Boolean
+  image          String?
+  role           UserRole
+  sessions       Session[]
+  accounts       Account[]
+  Survey         Survey[]
+  SurveyResponse SurveyResponse[]
 
   @@map("user")
 }
@@ -73,3 +75,123 @@ model Verification {
   @@map("verification")
 }
 
+enum SurveyStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum QuestionType {
+  TEXT
+  MULTIPLE_CHOICE
+  CHECKBOX
+  RADIO
+  RATING
+  DATE
+  EMAIL
+  NUMBER
+}
+
+model Survey {
+  id             Int              @id @default(autoincrement())
+  title          String
+  description    String?
+  status         SurveyStatus     @default(DRAFT)
+  isPublic       Boolean          @default(false)
+  allowAnonymous Boolean          @default(true)
+  maxResponses   Int?
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  creatorId      String
+  creator        User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  questions      Question[]
+  responses      SurveyResponse[]
+  tokens         SurveyToken[]
+
+  @@map("survey")
+}
+
+model Question {
+  id          Int              @id @default(autoincrement())
+  text        String
+  description String?
+  type        QuestionType
+  isRequired  Boolean          @default(false)
+  order       Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  surveyId    Int
+  survey      Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  options     QuestionOption[]
+  answers     ResponseAnswer[]
+
+  @@map("question")
+}
+
+model QuestionOption {
+  id              Int              @id @default(autoincrement())
+  text            String
+  value           String?
+  order           Int
+  createdAt       DateTime         @default(now())
+  questionId      Int
+  question        Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedAnswers ResponseAnswer[]
+
+  @@map("question_option")
+}
+
+model SurveyResponse {
+  id           Int              @id @default(autoincrement())
+  isAnonymous  Boolean          @default(false)
+  ipAddress    String?
+  userAgent    String?
+  completedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  surveyId     Int
+  respondentId String?
+  survey       Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  respondent   User?            @relation(fields: [respondentId], references: [id], onDelete: SetNull)
+  answers      ResponseAnswer[]
+  tokenId      Int?
+  token        SurveyToken?     @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+
+  @@map("survey_response")
+}
+
+model ResponseAnswer {
+  id               Int             @id @default(autoincrement())
+  textValue        String?
+  numberValue      Float?
+  dateValue        DateTime?
+  booleanValue     Boolean?
+  createdAt        DateTime        @default(now())
+  responseId       Int
+  questionId       Int
+  selectedOptionId Int?
+  response         SurveyResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@unique([responseId, questionId])
+  @@map("response_answer")
+}
+
+model SurveyToken {
+  id          Int              @id @default(autoincrement())
+  token       String           @unique @default(uuid())
+  isActive    Boolean          @default(true)
+  expiresAt   DateTime?
+  maxUses     Int?
+  currentUses Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  surveyId    Int
+  survey      Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responses   SurveyResponse[]
+
+  @@map("survey_token")
+}
