@@ -8,16 +8,69 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  FileText,
+  Users,
+  BarChart3,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  TrendingUp,
+  Calendar,
+  Target,
+  Clock,
+  MoreHorizontal,
+  ExternalLink,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
+import Link from "next/link";
+
+// Import our custom hooks
+import {
+  useMySurveys,
+  useSurveyCount,
+  useDeleteSurvey,
+  usePublishSurvey,
+} from "@/hooks/use-surveys";
+import { useResponseStats } from "@/hooks/use-responses";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [surveyToDelete, setSurveyToDelete] = useState<number | null>(null);
 
-  // Get current session and user data using better-auth
+  // Get current session and user data
   const { data: session, isLoading: sessionLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -26,26 +79,22 @@ export default function DashboardPage() {
     },
   });
 
+  // Use our custom hooks for real data
+  const {
+    data: surveys,
+    isLoading: surveysLoading,
+    error: surveysError,
+  } = useMySurveys();
+  const { data: surveyCount, isLoading: countLoading } = useSurveyCount();
+  const { stats: responseStats, isLoading: responseStatsLoading } =
+    useResponseStats();
+
+  // Mutations
+  const deleteSurveyMutation = useDeleteSurvey();
+  const publishSurveyMutation = usePublishSurvey();
+
   const user = session?.data?.user;
   const isAuthenticated = !!session?.data?.session;
-
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const result = await authClient.signOut();
-      return result;
-    },
-    onSuccess: () => {
-      router.push("/signin");
-    },
-    onError: (error) => {
-      console.error("Logout failed:", error);
-    },
-  });
-
-  const handleLogout = async () => {
-    logoutMutation.mutate();
-  };
 
   // Redirect to signin if not authenticated
   if (!sessionLoading && !isAuthenticated) {
@@ -56,190 +105,505 @@ export default function DashboardPage() {
   // Show loading state
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading your dashboard...</p>
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-3 w-32 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate stats from real data
+  const safesurveys = Array.isArray(surveys) ? surveys : [];
+  const totalSurveys = safesurveys.length;
+  const publishedSurveys = safesurveys.filter(
+    (s) => s.status === "PUBLISHED"
+  ).length;
+  const draftSurveys = safesurveys.filter((s) => s.status === "DRAFT").length;
+  const totalResponses = responseStats?.totalResponses || 0;
+
+  // Calculate average response rate
+  const avgResponseRate =
+    safesurveys.length > 0
+      ? Math.round(
+          safesurveys.reduce((acc, survey) => {
+            const count = survey._count?.responses || 0;
+            // Assuming 100 views per survey for demo - in real app you'd track views
+            const rate = count > 0 ? (count / 100) * 100 : 0;
+            return acc + rate;
+          }, 0) / safesurveys.length
+        )
+      : 0;
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PUBLISHED":
+        return (
+          <Badge variant="default" className="bg-green-600">
+            Published
+          </Badge>
+        );
+      case "DRAFT":
+        return <Badge variant="secondary">Draft</Badge>;
+      case "CLOSED":
+        return <Badge variant="destructive">Closed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const handleDeleteSurvey = async () => {
+    if (!surveyToDelete) return;
+
+    try {
+      await deleteSurveyMutation.mutateAsync(surveyToDelete);
+      setDeleteDialogOpen(false);
+      setSurveyToDelete(null);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handlePublishSurvey = async (surveyId: number) => {
+    try {
+      await publishSurveyMutation.mutateAsync(surveyId);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
+  // Handle errors
+  if (surveysError) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-2">Error loading dashboard data</div>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back! Here's your account information.
-          </p>
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <div className="flex items-center space-x-2">
+          <SidebarTrigger />
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">
+              Welcome back, {user?.name}! Here's an overview of your surveys.
+            </p>
+          </div>
         </div>
+        <div className="flex items-center space-x-2">
+          <Button asChild>
+            <Link href="/surveys/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Survey
+            </Link>
+          </Button>
+        </div>
+      </div>
 
-        {/* User Information Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>User Information</CardTitle>
-            <CardDescription>
-              Your account details and profile information
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Name
-                  </label>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {user?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Email
-                  </label>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {user?.email || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Role
-                  </label>
-                  <p className="text-lg font-semibold">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        (user as any)?.role === "CREATOR"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {(user as any)?.role || "N/A"}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Email Verified
-                  </label>
-                  <p className="text-lg">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user?.emailVerified
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {user?.emailVerified ? "Yes" : "No"}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    User ID
-                  </label>
-                  <p className="text-sm font-mono text-gray-700 bg-gray-100 p-2 rounded">
-                    {user?.id || "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Raw Session Data Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Raw Session Data</CardTitle>
-            <CardDescription>
-              Complete session object from better-auth
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-              {JSON.stringify(session?.data, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-
-        {/* Auth Store State Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Authentication State</CardTitle>
-            <CardDescription>Current state of the auth store</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Is Authenticated
-                </label>
-                <p className="text-lg">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isAuthenticated
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {isAuthenticated ? "Yes" : "No"}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">
-                  Session Active
-                </label>
-                <p className="text-lg">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      session?.data?.session
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {session?.data?.session ? "Yes" : "No"}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions Card */}
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-            <CardDescription>Account management options</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Surveys</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                variant="outline"
-                onClick={() => window.location.reload()}
-                className="sm:w-auto"
-              >
-                Refresh Page
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-                className="sm:w-auto"
-              >
-                {logoutMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging out...
-                  </>
-                ) : (
-                  "Logout"
-                )}
-              </Button>
+            <div className="text-2xl font-bold">
+              {countLoading ? (
+                <Skeleton className="h-7 w-12" />
+              ) : (
+                surveyCount || totalSurveys
+              )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {draftSurveys} drafts, {publishedSurveys} published
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Responses
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {responseStatsLoading ? (
+                <Skeleton className="h-7 w-12" />
+              ) : (
+                totalResponses
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {responseStats?.anonymousResponses || 0} anonymous,{" "}
+              {responseStats?.registeredResponses || 0} registered
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Active Surveys
+            </CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{publishedSurveys}</div>
+            <p className="text-xs text-muted-foreground">
+              Currently collecting responses
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Avg. Response Rate
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgResponseRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {responseStats?.recentResponses || 0} this week
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="surveys" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="surveys">My Surveys</TabsTrigger>
+          <TabsTrigger value="recent">Recent Activity</TabsTrigger>
+          <TabsTrigger value="analytics">Quick Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="surveys" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Surveys</CardTitle>
+              <CardDescription>
+                Manage and monitor your survey collection
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {surveysLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : safesurveys.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Survey</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Responses</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {safesurveys.map((survey) => (
+                      <TableRow key={survey.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{survey.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {survey.description}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {survey._count?.questions || 0} questions •{" "}
+                              {survey.isPublic ? "Public" : "Private"}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(survey.status)}</TableCell>
+                        <TableCell>
+                          <div className="text-sm font-medium">
+                            {survey._count?.responses || 0}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {formatDistanceToNow(new Date(survey.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/responses?survey=${survey.id}`}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Responses
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/surveys/${survey.id}/edit`}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Survey
+                                </Link>
+                              </DropdownMenuItem>
+                              {survey.status === "DRAFT" && (
+                                <DropdownMenuItem
+                                  onClick={() => handlePublishSurvey(survey.id)}
+                                  disabled={publishSurveyMutation.isPending}
+                                >
+                                  <ExternalLink className="mr-2 h-4 w-4" />
+                                  Publish Survey
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSurveyToDelete(survey.id);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Survey
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-medium">No surveys</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Get started by creating your first survey.
+                  </p>
+                  <div className="mt-6">
+                    <Button asChild>
+                      <Link href="/surveys/create">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Survey
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recent" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>
+                Latest actions and updates on your surveys
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {responseStatsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-start space-x-3">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/4" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                        <Users className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm">
+                          {responseStats?.recentResponses || 0} new responses
+                          this week
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Across all your surveys
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                        <FileText className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm">
+                          {publishedSurveys} active surveys collecting responses
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {draftSurveys} drafts waiting to be published
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
+                        <BarChart3 className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm">
+                          Average response rate: {avgResponseRate}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {responseStats?.anonymousResponses || 0} anonymous,{" "}
+                          {responseStats?.registeredResponses || 0} registered
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Response Overview</CardTitle>
+                <CardDescription>
+                  Your survey response statistics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {responseStatsLoading ? (
+                    <Skeleton className="h-7 w-12" />
+                  ) : (
+                    totalResponses
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total responses across all surveys
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Anonymous</span>
+                    <span>{responseStats?.anonymousResponses || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Registered Users</span>
+                    <span>{responseStats?.registeredResponses || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>This Week</span>
+                    <span>{responseStats?.recentResponses || 0}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Survey Performance</CardTitle>
+                <CardDescription>
+                  Overview of your survey collection
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalSurveys}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total surveys created
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Published</span>
+                    <span className="text-green-600">{publishedSurveys}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Drafts</span>
+                    <span className="text-yellow-600">{draftSurveys}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>Avg. Response Rate</span>
+                    <span>{avgResponseRate}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* View Full Analytics Button */}
+          <Card>
+            <CardContent className="flex items-center justify-center p-6">
+              <div className="text-center space-y-3">
+                <BarChart3 className="mx-auto h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Want to see detailed insights and charts?
+                </p>
+                <Button asChild>
+                  <Link href="/analytics">
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    View Full Analytics
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Survey</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this survey? This action cannot be
+              undone. All responses and data will be permanently lost.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSurvey}
+              disabled={deleteSurveyMutation.isPending}
+            >
+              {deleteSurveyMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
