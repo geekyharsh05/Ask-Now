@@ -109,7 +109,7 @@ export default function HeroSection() {
                   as="h1"
                   className="mt-8 text-balance text-6xl md:text-7xl lg:mt-16 xl:text-[5.25rem]"
                 >
-                Your Survey, Your Strategy
+                  Your Survey, Your Strategy
                 </TextEffect>
                 <TextEffect
                   per="line"
@@ -119,9 +119,9 @@ export default function HeroSection() {
                   as="p"
                   className="mx-auto mt-8 max-w-2xl text-balance text-lg"
                 >
-                  Build surveys in minutes, reach your target
-                  audience, and collect valuable data to make informed
-                  decisions. Perfect for businesses of all sizes.
+                  Build surveys in minutes, reach your target audience, and
+                  collect valuable data to make informed decisions. Perfect for
+                  businesses of all sizes.
                 </TextEffect>
 
                 <AnimatedGroup
@@ -203,7 +203,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </AnimatedGroup>
-          </div>
+          </div> 
         </section>
         <section className="bg-background pb-16 pt-16 md:pb-32">
           <div className="group relative m-auto max-w-5xl px-6">

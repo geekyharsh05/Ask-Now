@@ -26,10 +26,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { signUpInput, SignUpSchema } from "@/validators/auth-schema";
-import { useSignUp } from "@/data/auth/hooks";
 
 export default function SignUpForm() {
-  const signUpMutation = useSignUp();
 
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpInput),
@@ -41,10 +39,6 @@ export default function SignUpForm() {
       role: "RESPONDENT",
     },
   });
-
-  async function onSubmit(values: SignUpSchema) {
-    signUpMutation.mutate(values);
-  }
 
   return (
     <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">

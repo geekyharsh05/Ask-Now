@@ -24,10 +24,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { signInInput, SignInSchema } from "@/validators/auth-schema";
-import { useSignIn } from "@/data/auth/hooks";
+
 
 export default function SignInForm() {
-  const signInMutation = useSignIn();
 
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInInput),
@@ -36,10 +35,6 @@ export default function SignInForm() {
       password: "",
     },
   });
-
-  async function onSubmit(values: SignInSchema) {
-    signInMutation.mutate(values);
-  }
 
   return (
     <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
