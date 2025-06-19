@@ -20,7 +20,6 @@ export const auth = betterAuth({
 
     emailAndPassword: {
         enabled: true,
-        requireEmailVerification: true,
         // sendResetPassword: async ({ user, url }) => {
         //     await sendEmail({
         //       to: user.email,
@@ -29,6 +28,17 @@ export const auth = betterAuth({
         //     });
         // },
     },
-}satisfies BetterAuthOptions);
+
+    user: {
+        additionalFields: {
+            role: {
+                type: "string",
+                required: true,
+                input: true,
+            },
+        },
+    },
+
+} satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;

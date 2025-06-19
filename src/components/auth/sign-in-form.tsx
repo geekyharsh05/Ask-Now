@@ -4,6 +4,9 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 import {
   Form,
@@ -25,16 +28,40 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { signInInput, SignInSchema } from "@/validators/auth-schema";
 
-
 export default function SignInForm() {
+  const router = useRouter();
 
   const form = useForm<SignInSchema>({
     resolver: zodResolver(signInInput),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
+
+  const signInMutation = useMutation({
+    mutationFn: async (data: SignInSchema) => {
+      const result = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      });
+      return result;
+    },
+    onSuccess: (data) => {
+      if (data.error) {
+        form.setError("root", { message: data.error.message });
+      } else {
+        router.push("/dashboard");
+      }
+    },
+    onError: (error) => {
+      form.setError("root", { message: error.message });
+    },
+  });
+
+  const onSubmit = (data: SignInSchema) => {
+    signInMutation.mutate(data);
+  };
 
   return (
     <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
@@ -51,16 +78,16 @@ export default function SignInForm() {
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="username">Username</FormLabel>
+                      <FormLabel htmlFor="email">Email</FormLabel>
                       <FormControl>
                         <Input
-                          id="username"
-                          placeholder="johndoe"
-                          type="username"
-                          autoComplete="username"
+                          id="email"
+                          placeholder="johndoe@example.com"
+                          type="email"
+                          autoComplete="email"
                           {...field}
                         />
                       </FormControl>

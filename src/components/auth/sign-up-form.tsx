@@ -4,6 +4,9 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 import {
   Form,
@@ -28,17 +31,46 @@ import { Label } from "@/components/ui/label";
 import { signUpInput, SignUpSchema } from "@/validators/auth-schema";
 
 export default function SignUpForm() {
+  const router = useRouter();
 
   const form = useForm<SignUpSchema>({
     resolver: zodResolver(signUpInput),
     defaultValues: {
       name: "",
-      username: "",
       email: "",
       password: "",
-      role: "RESPONDENT",
+      role: "",
     },
   });
+
+  const signUpMutation = useMutation({
+    mutationFn: async (data: SignUpSchema) => {
+      const result = await authClient.signUp.email({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        role: data.role,
+      } as any);
+      console.log(result);
+      return result;
+    },
+
+    onSuccess: (data) => {
+      if (data.error) {
+        form.setError("root", { message: data.error.message });
+      } else {
+        router.push("/dashboard");
+      }
+    },
+
+    onError: (error) => {
+      form.setError("root", { message: error.message });
+    },
+  });
+
+  const onSubmit = (data: SignUpSchema) => {
+    signUpMutation.mutate(data);
+  };
 
   return (
     <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
@@ -69,24 +101,7 @@ export default function SignUpForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="username">Username</FormLabel>
-                      <FormControl>
-                        <Input
-                          id="username"
-                          placeholder="johndoe"
-                          autoComplete="username"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -141,9 +156,7 @@ export default function SignUpForm() {
                               value="RESPONDENT"
                               id="respondent"
                             />
-                            <Label htmlFor="respondent">
-                              Respondent
-                            </Label>
+                            <Label htmlFor="respondent">Respondent</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="CREATOR" id="creator" />

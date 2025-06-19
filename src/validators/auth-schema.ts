@@ -2,17 +2,16 @@ import { z } from "zod";
 
 export const signUpInput = z.object({
   name: z.string().min(3),
-  username: z.string().min(3),
   email: z.string().email(),
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters long' })
     .regex(/[a-zA-Z0-9]/, { message: 'Password must be alphanumeric' }),
-  role: z.enum(["RESPONDENT", "CREATOR"]),
+  role: z.enum(["RESPONDENT", "CREATOR", ""]),
 });
 
 export const signInInput = z.object({
-  username: z.string().min(3),
+  email: z.string().email(),
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters long' })

@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuthStore, useUser, useIsAuthenticated } from "@/store/auth-store";
 import {
   Card,
   CardContent,
@@ -9,29 +8,62 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/data/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
-  const user = useUser();
-  const isAuthenticated = useIsAuthenticated();
-  const { clearAuth } = useAuthStore();
   const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Get current session and user data using better-auth
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const result = await authClient.getSession();
+      return result;
+    },
+  });
+
+  const user = session?.data?.user;
+  const isAuthenticated = !!session?.data?.session;
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const result = await authClient.signOut();
+      return result;
+    },
+    onSuccess: () => {
+      router.push("/signin");
+    },
+    onError: (error) => {
+      console.error("Logout failed:", error);
+    },
+  });
 
   const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await signOut();
-      clearAuth();
-      router.push("/signin");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
+    logoutMutation.mutate();
   };
+
+  // Redirect to signin if not authenticated
+  if (!sessionLoading && !isAuthenticated) {
+    router.push("/signin");
+    return null;
+  }
+
+  // Show loading state
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -58,23 +90,15 @@ export default function DashboardPage() {
                   <label className="text-sm font-medium text-gray-500">
                     Name
                   </label>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-lg font-semibold text-gray-900">
                     {user?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Username
-                  </label>
-                  <p className="text-lg font-semibold text-white">
-                    {user?.username || "N/A"}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Email
                   </label>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-lg font-semibold text-gray-900">
                     {user?.email || "N/A"}
                   </p>
                 </div>
@@ -82,15 +106,31 @@ export default function DashboardPage() {
                   <label className="text-sm font-medium text-gray-500">
                     Role
                   </label>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-lg font-semibold">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user?.role === "CREATOR"
+                        (user as any)?.role === "CREATOR"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user?.role || "N/A"}
+                      {(user as any)?.role || "N/A"}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">
+                    Email Verified
+                  </label>
+                  <p className="text-lg">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user?.emailVerified
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {user?.emailVerified ? "Yes" : "No"}
                     </span>
                   </p>
                 </div>
@@ -107,17 +147,17 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Raw User Data Card */}
+        {/* Raw Session Data Card */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Raw User Data</CardTitle>
+            <CardTitle>Raw Session Data</CardTitle>
             <CardDescription>
-              Complete user object from the auth store
+              Complete session object from better-auth
             </CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-              {JSON.stringify(user, null, 2)}
+              {JSON.stringify(session?.data, null, 2)}
             </pre>
           </CardContent>
         </Card>
@@ -148,17 +188,17 @@ export default function DashboardPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">
-                  Token Present
+                  Session Active
                 </label>
                 <p className="text-lg">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      useAuthStore.getState().token
+                      session?.data?.session
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {useAuthStore.getState().token ? "Yes" : "No"}
+                    {session?.data?.session ? "Yes" : "No"}
                   </span>
                 </p>
               </div>
@@ -184,10 +224,17 @@ export default function DashboardPage() {
               <Button
                 variant="destructive"
                 onClick={handleLogout}
-                disabled={isLoggingOut}
+                disabled={logoutMutation.isPending}
                 className="sm:w-auto"
               >
-                {isLoggingOut ? "Logging out..." : "Logout"}
+                {logoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging out...
+                  </>
+                ) : (
+                  "Logout"
+                )}
               </Button>
             </div>
           </CardContent>
