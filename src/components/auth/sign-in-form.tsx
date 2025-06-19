@@ -67,9 +67,9 @@ export default function SignInForm() {
     <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Sign In</CardTitle>
           <CardDescription>
-            Enter your email and password to login to your account.
+            Enter your email and password to signin to your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
