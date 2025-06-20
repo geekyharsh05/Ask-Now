@@ -64,6 +64,7 @@ import {
   usePublishSurvey,
 } from "@/hooks/use-surveys";
 import { useResponseStats } from "@/hooks/use-responses";
+import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -204,6 +205,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <div className="flex items-center space-x-2">
           <SidebarTrigger />
+          <Separator orientation="vertical" className="h-4 w-px bg-muted" />
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
             <p className="text-muted-foreground">
@@ -333,7 +335,7 @@ export default function DashboardPage() {
                           <div>
                             <div className="font-medium">{survey.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {survey.description}
+                              {survey.description?.slice(0, 50)}...
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {survey._count?.questions || 0} questions •{" "}
@@ -556,24 +558,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* View Full Analytics Button */}
-          <Card>
-            <CardContent className="flex items-center justify-center p-6">
-              <div className="text-center space-y-3">
-                <BarChart3 className="mx-auto h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Want to see detailed insights and charts?
-                </p>
-                <Button asChild>
-                  <Link href="/analytics">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    View Full Analytics
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 

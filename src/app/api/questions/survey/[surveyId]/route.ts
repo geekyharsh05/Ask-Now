@@ -5,12 +5,13 @@ import { CreateQuestionRequest } from '@/types';
 // POST /api/questions/survey/[surveyId] - Add question to survey
 export async function POST(
   request: NextRequest,
-  { params }: { params: { surveyId: string } }
+  { params }: { params: Promise<{ surveyId: string }> }
 ) {
   try {
-    const surveyId = parseInt(params.surveyId);
+    const { surveyId } = await params;
+    const surveyIdInt = parseInt(surveyId);
     
-    if (isNaN(surveyId)) {
+    if (isNaN(surveyIdInt)) {
       return NextResponse.json(
         { success: false, error: 'Invalid survey ID' },
         { status: 400 }
@@ -34,7 +35,7 @@ export async function POST(
       );
     }
 
-    const question = await questionDAL.addQuestionToSurvey(surveyId, body);
+    const question = await questionDAL.addQuestionToSurvey(surveyIdInt, body);
     return NextResponse.json({
       success: true,
       data: question
@@ -76,19 +77,20 @@ export async function POST(
 // GET /api/questions/survey/[surveyId] - Get questions by survey
 export async function GET(
   request: NextRequest,
-  { params }: { params: { surveyId: string } }
+  { params }: { params: Promise<{ surveyId: string }> }
 ) {
   try {
-    const surveyId = parseInt(params.surveyId);
+    const { surveyId } = await params;
+    const surveyIdInt = parseInt(surveyId);
     
-    if (isNaN(surveyId)) {
+    if (isNaN(surveyIdInt)) {
       return NextResponse.json(
         { success: false, error: 'Invalid survey ID' },
         { status: 400 }
       );
     }
 
-    const questions = await questionDAL.getQuestionsBySurvey(surveyId);
+    const questions = await questionDAL.getQuestionsBySurvey(surveyIdInt);
     return NextResponse.json({
       success: true,
       data: questions

@@ -148,6 +148,9 @@ export const responseDAL = {
             selectedOption: true
           }
         },
+        survey: {
+          select: { id: true, title: true, description: true }
+        },
         respondent: {
           select: { id: true, name: true, email: true }
         }

@@ -435,5 +435,27 @@ export const questionDAL = {
         questionId
       }
     });
+  },
+
+  // Get question by ID
+  async getQuestionById(questionId: number): Promise<Question> {
+    // Fetch the question with its options first
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      include: {
+        options: {
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    if (!question) {
+      throw new Error('Question not found');
+    }
+
+    // Ensure the current user has access to the parent survey
+    await surveyDAL.getSurveyById(question.surveyId);
+
+    return question as any;
   }
 }; 

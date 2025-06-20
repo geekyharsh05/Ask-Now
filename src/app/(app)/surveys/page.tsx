@@ -290,7 +290,7 @@ export default function SurveysPage() {
                           <div>
                             <div className="font-medium">{survey.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {survey.description}
+                              {survey.description?.slice(0, 50)}...
                             </div>
                             <div className="text-xs text-muted-foreground mt-1 flex items-center space-x-2">
                               <span>

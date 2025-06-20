@@ -22,6 +22,7 @@ export const HeroHeader = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   return (
     <header>
       <nav
@@ -110,7 +111,7 @@ export const HeroHeader = () => {
                   size="sm"
                   className={cn(isScrolled ? "lg:inline-flex" : "hidden")}
                 >
-                  <Link href="#">
+                  <Link href="/signup">
                     <span>Get Started</span>
                   </Link>
                 </Button>

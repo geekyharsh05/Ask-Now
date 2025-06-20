@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMySurveys } from './use-surveys';
 import { useMyResponses } from './use-responses';
-import { Survey, SurveyResponse, Question, QuestionType } from '@/types';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { Survey, SurveyResponse, QuestionType } from '@/types';
+import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 
 // Analytics query keys
 export const analyticsKeys = {
@@ -77,7 +77,7 @@ export interface SurveyAnalytics {
 // Main analytics overview hook
 export function useAnalyticsOverview() {
   const { data: surveys, isLoading: surveysLoading } = useMySurveys();
-  const { responses, isLoading: responsesLoading } = useMyResponses();
+  const { data: responses, isLoading: responsesLoading } = useMyResponses();
 
   return useQuery({
     queryKey: analyticsKeys.overview(),
@@ -90,7 +90,7 @@ export function useAnalyticsOverview() {
 // Time series analytics hook
 export function useTimeSeriesAnalytics(period: 'week' | 'month' | 'quarter' = 'month') {
   const { data: surveys } = useMySurveys();
-  const { responses } = useMyResponses();
+  const { data: responses } = useMyResponses();
 
   return useQuery({
     queryKey: analyticsKeys.timesSeries(period),
@@ -103,7 +103,7 @@ export function useTimeSeriesAnalytics(period: 'week' | 'month' | 'quarter' = 'm
 // Survey-specific analytics hook
 export function useSurveyAnalytics(surveyId: number) {
   const { data: surveys } = useMySurveys();
-  const { responses } = useMyResponses();
+  const { data: responses } = useMyResponses();
 
   return useQuery({
     queryKey: analyticsKeys.surveyAnalytics(surveyId),
@@ -316,7 +316,7 @@ export function useQuestionTypeAnalytics() {
 // Response rate trends
 export function useResponseRateTrends() {
   const { data: surveys } = useMySurveys();
-  const { responses } = useMyResponses();
+  const { data: responses } = useMyResponses();
 
   return useQuery({
     queryKey: [...analyticsKeys.all, 'responseRates'],

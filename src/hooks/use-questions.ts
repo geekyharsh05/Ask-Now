@@ -24,6 +24,11 @@ export function useQuestionsBySurvey(surveyId: number) {
   });
 }
 
+// Alias for backward compatibility
+export function useQuestions(surveyId: number) {
+  return useQuestionsBySurvey(surveyId);
+}
+
 // Get question by ID
 export function useQuestion(id: number) {
   return useQuery({

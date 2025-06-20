@@ -48,6 +48,7 @@ import {
   Lock,
   Users,
   Loader2,
+  Sparkles
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -70,6 +71,7 @@ import {
   CreateQuestionRequest,
   CreateQuestionOptionRequest,
 } from "@/types";
+import { AISurveyAssistant } from "@/components/ai-survey-assistant";
 
 interface LocalQuestion {
   id: string;
@@ -128,6 +130,31 @@ export default function CreateSurveyPage() {
   });
 
   const watchedValues = watch();
+
+  // Handle AI-generated survey
+  const handleAIGeneratedSurvey = (aiSurvey: {
+    title: string;
+    description: string;
+    questions: Array<{
+      id: string;
+      type: any;
+      text: string;
+      description?: string;
+      isRequired: boolean;
+      order: number;
+      options?: { id: string; text: string; order: number }[];
+    }>;
+  }) => {
+    // Populate form with AI-generated data
+    setValue("title", aiSurvey.title);
+    setValue("description", aiSurvey.description);
+
+    // Set questions from AI
+    setQuestions(aiSurvey.questions);
+
+    // Switch to questions tab to show generated questions
+    setActiveTab("questions");
+  };
 
   const addQuestion = (type: LocalQuestion["type"]) => {
     const newQuestion: LocalQuestion = {
@@ -427,6 +454,7 @@ export default function CreateSurveyPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <AISurveyAssistant onSurveyGenerated={handleAIGeneratedSurvey} />
           <Button
             variant="outline"
             onClick={saveDraft}
@@ -475,6 +503,23 @@ export default function CreateSurveyPage() {
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
+          {/* AI Assistant Tip */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start space-x-3">
+              <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                  ✨ Try the AI Assistant
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                  Skip the manual work! Click the "AI Assistant" button above to
+                  generate a complete survey with professional questions based
+                  on your topic.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Survey Information</CardTitle>

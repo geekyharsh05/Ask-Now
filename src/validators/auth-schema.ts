@@ -18,5 +18,25 @@ export const signInInput = z.object({
     .regex(/[a-zA-Z0-9]/, { message: 'Password must be alphanumeric' }),
 });
 
+export const forgotPasswordInput = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordInput = z.object({
+  password: z
+    .string()
+    .min(6, { message: 'Password must be at least 6 characters long' })
+    .regex(/[a-zA-Z0-9]/, { message: 'Password must be alphanumeric' }),
+  confirmPassword: z
+    .string()
+    .min(6, { message: 'Password must be at least 6 characters long' })
+    .regex(/[a-zA-Z0-9]/, { message: 'Password must be alphanumeric' }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export type SignUpSchema = z.infer<typeof signUpInput>;
 export type SignInSchema = z.infer<typeof signInInput>;
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordInput>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordInput>;

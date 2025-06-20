@@ -25,7 +25,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -45,16 +44,11 @@ import {
 import {
   MessageSquare,
   Eye,
-  Download,
-  Filter,
   Search,
   Calendar,
-  Users,
-  BarChart3,
   User,
   Globe,
   Clock,
-  CheckCircle,
   MoreHorizontal,
   FileDown,
 } from "lucide-react";
@@ -67,7 +61,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-// Import our custom hooks
 import { useMySurveys } from "@/hooks/use-surveys";
 import { useMyResponses, useResponsesBySurvey } from "@/hooks/use-responses";
 
@@ -94,11 +87,8 @@ export default function ResponsesPage() {
 
   // Use our custom hooks for real data
   const { data: surveys, isLoading: surveysLoading } = useMySurveys();
-  const {
-    stats: responseStats,
-    responses: allResponses,
-    isLoading: allResponsesLoading,
-  } = useMyResponses();
+  const { data: allResponses, isLoading: allResponsesLoading } =
+    useMyResponses();
 
   // If a specific survey is selected, get its responses
   const selectedSurveyId = urlSurveyId ? parseInt(urlSurveyId) : null;
@@ -142,7 +132,7 @@ export default function ResponsesPage() {
 
   // Filter responses
   const filteredResponses =
-    responses?.filter((response) => {
+    responses?.filter((response: any) => {
       const matchesSearch =
         response.survey?.title
           ?.toLowerCase()
@@ -162,9 +152,13 @@ export default function ResponsesPage() {
       return matchesSearch && matchesSurvey;
     }) || [];
 
-  const anonymousResponses = filteredResponses.filter((r) => r.isAnonymous);
-  const registeredResponses = filteredResponses.filter((r) => !r.isAnonymous);
-  const recentResponses = filteredResponses.filter((r) => {
+  const anonymousResponses = filteredResponses.filter(
+    (r: any) => r.isAnonymous
+  );
+  const registeredResponses = filteredResponses.filter(
+    (r: any) => !r.isAnonymous
+  );
+  const recentResponses = filteredResponses.filter((r: any) => {
     const responseDate = new Date(r.createdAt);
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -195,8 +189,8 @@ export default function ResponsesPage() {
 
     // Add answer columns
     const allQuestions = new Set<string>();
-    filteredResponses.forEach((response) => {
-      response.answers?.forEach((answer) => {
+    filteredResponses.forEach((response: any) => {
+      response.answers?.forEach((answer: any) => {
         if (answer.question?.text) {
           allQuestions.add(answer.question.text);
         }
@@ -206,7 +200,7 @@ export default function ResponsesPage() {
     const questionHeaders = Array.from(allQuestions);
     const csvHeaders = [...headers, ...questionHeaders];
 
-    const csvRows = filteredResponses.map((response) => {
+    const csvRows = filteredResponses.map((response: any) => {
       const baseRow = [
         response.id,
         response.survey?.title || "Unknown Survey",
@@ -225,7 +219,7 @@ export default function ResponsesPage() {
       // Add answer values
       const answerValues = questionHeaders.map((questionText) => {
         const answer = response.answers?.find(
-          (a) => a.question?.text === questionText
+          (a: any) => a.question?.text === questionText
         );
         return (
           answer?.textValue ||
@@ -239,7 +233,7 @@ export default function ResponsesPage() {
     });
 
     const csvContent = [csvHeaders, ...csvRows]
-      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .map((row) => row.map((field: any) => `"${field}"`).join(","))
       .join("\n");
 
     // Download CSV
@@ -430,12 +424,12 @@ export default function ResponsesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredResponses.map((response) => (
+                    {filteredResponses.map((response: any) => (
                       <TableRow key={response.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {response.survey?.title || "Unknown Survey"}
+                              {response.survey?.title || "Ask Now"}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {response.answers?.length || 0} answers
@@ -549,7 +543,7 @@ export default function ResponsesPage() {
                 </div>
               ) : recentResponses.length > 0 ? (
                 <div className="space-y-4">
-                  {recentResponses.map((response) => (
+                  {recentResponses.map((response: any) => (
                     <div
                       key={response.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
@@ -628,7 +622,7 @@ export default function ResponsesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {anonymousResponses.map((response) => (
+                    {anonymousResponses.map((response: any) => (
                       <TableRow key={response.id}>
                         <TableCell>
                           <div>
@@ -737,7 +731,7 @@ export default function ResponsesPage() {
                 <div className="space-y-4">
                   {surveys?.slice(0, 5).map((survey) => {
                     const surveyResponseCount = filteredResponses.filter(
-                      (r) => r.surveyId === survey.id
+                      (r: any) => r.surveyId === survey.id
                     ).length;
                     return (
                       <div

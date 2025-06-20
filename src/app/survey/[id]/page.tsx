@@ -455,7 +455,7 @@ export default function SurveyPage({ params }: SurveyPageProps) {
             )}
           </div>
           <div className="text-xs text-muted-foreground">
-            Survey by {survey.creator?.name || "Anonymous"}
+            Survey by {survey.creator?.name || "Ask Noq"}
           </div>
         </CardContent>
       </Card>
