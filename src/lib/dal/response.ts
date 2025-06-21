@@ -228,6 +228,30 @@ export const responseDAL = {
       },
       orderBy: { createdAt: 'desc' }
     }) as any;
+  },
+
+  // Check if current user has already responded to a survey
+  async hasUserResponded(surveyId: number): Promise<boolean> {
+    let currentUser = null;
+    try {
+      currentUser = await getCurrentUser();
+    } catch (error) {
+      // User not authenticated, return false
+      return false;
+    }
+
+    if (!currentUser) {
+      return false;
+    }
+
+    const existingResponse = await prisma.surveyResponse.findFirst({
+      where: {
+        surveyId,
+        respondentId: currentUser.id
+      }
+    });
+
+    return !!existingResponse;
   }
 };
 

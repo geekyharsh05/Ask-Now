@@ -59,7 +59,7 @@ export default function RespondentLayout({
           <div className="flex items-center space-x-4">
             <Link href="/respondent" className="flex items-center space-x-2">
               <Home className="h-6 w-6" />
-              <span className="font-bold text-xl">Survey Hub</span>
+              <span className="font-bold text-xl">Ask Now</span>
             </Link>
           </div>
 

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAvailableSurveys } from "@/hooks/use-public-surveys";
+import {
+  useAvailableSurveys,
+  useHasUserResponded,
+} from "@/hooks/use-public-surveys";
 import {
   Card,
   CardContent,
@@ -21,7 +24,128 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Clock, Users, Calendar, ArrowRight } from "lucide-react";
+import {
+  Search,
+  Clock,
+  Users,
+  Calendar,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
+
+// Individual survey card component that checks user response status
+function SurveyCard({
+  survey,
+  getSurveyStatus,
+  getTimeRemaining,
+  formatDate,
+}: {
+  survey: any;
+  getSurveyStatus: (survey: any) => { label: string; variant: any };
+  getTimeRemaining: (endDate: string | Date | null) => string | null;
+  formatDate: (date: string | Date | null) => string;
+}) {
+  const { data: hasResponded, isLoading: responseLoading } =
+    useHasUserResponded(survey.id);
+
+  const status = getSurveyStatus(survey);
+  const timeRemaining = getTimeRemaining(survey.endDate);
+  const canParticipate =
+    (status.label === "Active" || status.label === "Ending Soon") &&
+    !hasResponded;
+
+  return (
+    <Card className="flex flex-col">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="space-y-1 flex-1">
+            <CardTitle className="text-lg line-clamp-2">
+              {survey.title}
+            </CardTitle>
+            <div className="flex gap-2">
+              <Badge variant={status.variant} className="w-fit">
+                {status.label}
+              </Badge>
+              {hasResponded && (
+                <Badge variant="secondary" className="w-fit">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  Completed
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+        {survey.description && (
+          <CardDescription className="line-clamp-3">
+            {survey.description}
+          </CardDescription>
+        )}
+      </CardHeader>
+
+      <CardContent className="flex-1 space-y-4">
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span>
+              {survey._count?.responses || 0} response
+              {(survey._count?.responses || 0) !== 1 ? "s" : ""}
+              {survey.maxResponses && ` / ${survey.maxResponses} max`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>Ends: {formatDate(survey.endDate)}</span>
+          </div>
+
+          {timeRemaining && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span
+                className={
+                  timeRemaining.includes("left") ? "text-orange-600" : ""
+                }
+              >
+                {timeRemaining}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-2">
+          {responseLoading ? (
+            <Button disabled className="w-full">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+              Checking...
+            </Button>
+          ) : hasResponded ? (
+            <Button disabled variant="secondary" className="w-full">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Already Completed
+            </Button>
+          ) : canParticipate ? (
+            <Button asChild className="w-full">
+              <Link href={`/survey/${survey.id}`}>
+                Start Survey
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled className="w-full">
+              {status.label === "Full"
+                ? "Survey Full"
+                : status.label === "Ended"
+                  ? "Survey Ended"
+                  : status.label === "Upcoming"
+                    ? "Not Started"
+                    : "Unavailable"}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function RespondentDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -259,85 +383,14 @@ export default function RespondentDashboard() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {sortedSurveys.map((survey) => {
-            const status = getSurveyStatus(survey);
-            const timeRemaining = getTimeRemaining(survey.endDate);
-            const canParticipate =
-              status.label === "Active" || status.label === "Ending Soon";
-
             return (
-              <Card key={survey.id} className="flex flex-col">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <CardTitle className="text-lg line-clamp-2">
-                        {survey.title}
-                      </CardTitle>
-                      <Badge variant={status.variant} className="w-fit">
-                        {status.label}
-                      </Badge>
-                    </div>
-                  </div>
-                  {survey.description && (
-                    <CardDescription className="line-clamp-3">
-                      {survey.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-
-                <CardContent className="flex-1 space-y-4">
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {survey._count?.responses || 0} response
-                        {(survey._count?.responses || 0) !== 1 ? "s" : ""}
-                        {survey.maxResponses && ` / ${survey.maxResponses} max`}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Ends: {formatDate(survey.endDate)}</span>
-                    </div>
-
-                    {timeRemaining && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span
-                          className={
-                            timeRemaining.includes("left")
-                              ? "text-orange-600"
-                              : ""
-                          }
-                        >
-                          {timeRemaining}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-2">
-                    {canParticipate ? (
-                      <Button asChild className="w-full">
-                        <Link href={`/survey/${survey.id}`}>
-                          Start Survey
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button disabled className="w-full">
-                        {status.label === "Full"
-                          ? "Survey Full"
-                          : status.label === "Ended"
-                            ? "Survey Ended"
-                            : status.label === "Upcoming"
-                              ? "Not Started"
-                              : "Unavailable"}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <SurveyCard
+                key={survey.id}
+                survey={survey}
+                getSurveyStatus={getSurveyStatus}
+                getTimeRemaining={getTimeRemaining}
+                formatDate={formatDate}
+              />
             );
           })}
         </div>

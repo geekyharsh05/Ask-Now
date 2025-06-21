@@ -188,6 +188,12 @@ export const responseApi = {
   async getQuestionAnalytics(questionId: number): Promise<any> {
     const response = await api.get(`/responses/question/${questionId}/analytics`);
     return response.data.data;
+  },
+
+  // Check if user has already responded to a survey
+  async hasUserResponded(surveyId: number): Promise<boolean> {
+    const response = await api.get(`/responses/survey/${surveyId}/has-responded`);
+    return response.data.data;
   }
 };
 

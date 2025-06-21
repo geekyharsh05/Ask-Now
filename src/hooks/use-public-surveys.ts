@@ -48,12 +48,9 @@ export function useHasUserResponded(surveyId: number) {
     queryKey: ['userResponse', surveyId],
     queryFn: async (): Promise<boolean> => {
       try {
-        // This would need a custom API endpoint to check if current user has responded
-        // For now, we'll return false to allow participation
-        // In a real implementation, you'd have an endpoint like:
-        // return await apiClient.responses.hasUserResponded(surveyId);
-        return false;
+        return await apiClient.responses.hasUserResponded(surveyId);
       } catch (error) {
+        // If there's an error (e.g., user not authenticated), return false
         return false;
       }
     },
