@@ -80,7 +80,7 @@ export const responseDAL = {
     
     // Validate required questions are answered
     const requiredQuestions = survey.questions.filter(q => q.isRequired);
-    const answeredQuestionIds = data.answers.map(a => a.questionId);
+    const answeredQuestionIds = data.answers.map(a => parseInt(String(a.questionId), 10));
     
     for (const question of requiredQuestions) {
       if (!answeredQuestionIds.includes(question.id)) {
@@ -106,12 +106,12 @@ export const responseDAL = {
         await tx.responseAnswer.create({
           data: {
             responseId: response.id,
-            questionId: answer.questionId,
+            questionId: parseInt(String(answer.questionId), 10),
             textValue: answer.textValue,
             numberValue: answer.numberValue,
             dateValue: answer.dateValue,
             booleanValue: answer.booleanValue,
-            selectedOptionId: answer.selectedOptionId
+            selectedOptionId: answer.selectedOptionId ? parseInt(String(answer.selectedOptionId), 10) : null
           }
         });
       }
