@@ -51,7 +51,16 @@ export default function SignInForm() {
       if (data.error) {
         form.setError("root", { message: data.error.message });
       } else {
-        router.push("/dashboard");
+        // Check user role and redirect accordingly
+        const user = data.data?.user as any;
+        if (user?.role === "CREATOR") {
+          router.push("/dashboard");
+        } else if (user?.role === "RESPONDENT") {
+          router.push("/respondent");
+        } else {
+          // Fallback to root page for role detection
+          router.push("/");
+        }
       }
     },
     onError: (error) => {

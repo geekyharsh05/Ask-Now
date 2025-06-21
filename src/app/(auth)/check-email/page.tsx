@@ -27,10 +27,7 @@ export default function CheckEmailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center text-sm text-muted-foreground">
-            <p>Didn&apos;t receive the email? Check your spam folder or</p>
-            <Button variant="link" className="p-0 h-auto text-sm">
-              resend verification email
-            </Button>
+            <p>Didn&apos;t receive the email? Check your spam folder</p>
           </div>
           <div className="text-center">
             <Link
