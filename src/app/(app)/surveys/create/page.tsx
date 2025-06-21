@@ -440,10 +440,9 @@ export default function CreateSurveyPage() {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center">
           <Button variant="ghost" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <SidebarTrigger />
           <div>

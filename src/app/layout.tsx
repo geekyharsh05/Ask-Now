@@ -23,15 +23,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bricolage antialiased">
+      <body className={`${bricolage.className} antialiased dark`}>
         <QueryProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >
-            <Toaster richColors theme="dark" />
+            <Toaster
+              richColors
+              theme="dark"
+              closeButton
+              position="top-center"
+            />
             {children}
           </ThemeProvider>
         </QueryProvider>

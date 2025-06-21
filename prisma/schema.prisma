@@ -8,22 +8,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  RESPONDENT
-  CREATOR
-}
-
 model User {
   id             String           @id @default(uuid())
   email          String           @unique
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   name           String
-  emailVerified  Boolean
+  emailVerified   Boolean
   image          String?
   role           UserRole
-  sessions       Session[]
   accounts       Account[]
+  sessions       Session[]
   Survey         Survey[]
   SurveyResponse SurveyResponse[]
 
@@ -33,7 +28,7 @@ model User {
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime
   updatedAt DateTime
   ipAddress String?
@@ -41,7 +36,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
@@ -50,7 +44,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -60,6 +53,7 @@ model Account {
   password              String?
   createdAt             DateTime
   updatedAt             DateTime
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -75,23 +69,6 @@ model Verification {
   @@map("verification")
 }
 
-enum SurveyStatus {
-  DRAFT
-  PUBLISHED
-  CLOSED
-}
-
-enum QuestionType {
-  TEXT
-  MULTIPLE_CHOICE
-  CHECKBOX
-  RADIO
-  RATING
-  DATE
-  EMAIL
-  NUMBER
-}
-
 model Survey {
   id             Int              @id @default(autoincrement())
   title          String
@@ -105,8 +82,8 @@ model Survey {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   creatorId      String
-  creator        User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   questions      Question[]
+  creator        User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   responses      SurveyResponse[]
   tokens         SurveyToken[]
 
@@ -153,11 +130,11 @@ model SurveyResponse {
   updatedAt    DateTime         @updatedAt
   surveyId     Int
   respondentId String?
-  survey       Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  respondent   User?            @relation(fields: [respondentId], references: [id], onDelete: SetNull)
-  answers      ResponseAnswer[]
   tokenId      Int?
-  token        SurveyToken?     @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+  answers      ResponseAnswer[]
+  respondent   User?            @relation(fields: [respondentId], references: [id])
+  survey       Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  token        SurveyToken?     @relation(fields: [tokenId], references: [id])
 
   @@map("survey_response")
 }
@@ -172,9 +149,9 @@ model ResponseAnswer {
   responseId       Int
   questionId       Int
   selectedOptionId Int?
-  response         SurveyResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
   question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  response         SurveyResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id])
 
   @@unique([responseId, questionId])
   @@map("response_answer")
@@ -190,8 +167,30 @@ model SurveyToken {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   surveyId    Int
-  survey      Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   responses   SurveyResponse[]
+  survey      Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 
   @@map("survey_token")
+}
+
+enum UserRole {
+  RESPONDENT
+  CREATOR
+}
+
+enum SurveyStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum QuestionType {
+  TEXT
+  MULTIPLE_CHOICE
+  CHECKBOX
+  RADIO
+  RATING
+  DATE
+  EMAIL
+  NUMBER
 }

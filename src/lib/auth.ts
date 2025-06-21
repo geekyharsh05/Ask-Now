@@ -2,6 +2,7 @@ import { betterAuth, BetterAuthOptions } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./db";
 import sendEmail from "@/app/actions/send-email";
+import { getResetPasswordEmail, getEmailVerificationEmail } from "@/lib/email-templates";
  
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -24,8 +25,8 @@ export const auth = betterAuth({
         sendResetPassword: async ({ user, url }) => {
             await sendEmail({
               to: user.email,
-              subject: "Reset your password",
-              text: `Click the link to reset your password: ${url}`,
+              subject: "Reset your password - Ask Now",
+              html: getResetPasswordEmail(url),
             });
         },
     },
@@ -37,8 +38,8 @@ export const auth = betterAuth({
             const verificationUrl = `${process.env.BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.EMAIL_VERIFICATION_CALLBACK_URL}`;
             await sendEmail ({
               to: user.email,
-              subject: "Verify your email address",
-              text: `Click the link to verify your email: ${verificationUrl}`,
+              subject: "Welcome to Ask Now - Verify your email address",
+              html: getEmailVerificationEmail(verificationUrl, user.name),
             });
         }
     },

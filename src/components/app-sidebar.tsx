@@ -29,6 +29,7 @@ import {
   Plus,
   Search,
   LayoutDashboard,
+  Wand2,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -113,7 +114,7 @@ export function AppSidebar() {
               tooltip="Ask Now - Survey Platform"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                #
+                <FileText className="h-6 w-6" /> 
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold">Ask Now</span>

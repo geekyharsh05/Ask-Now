@@ -82,9 +82,9 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
-        <Card className="w-full">
-          <CardHeader>
+      <div className="flex min-h-screen w-full items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
             <CardTitle className="text-2xl">Invalid Reset Link</CardTitle>
             <CardDescription>
               The password reset link is invalid or has expired.
@@ -92,7 +92,10 @@ function ResetPasswordForm() {
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <Link href="/forgot-password" className="underline">
+              <Link
+                href="/forgot-password"
+                className="underline hover:no-underline"
+              >
                 Request a new password reset link
               </Link>
             </div>
@@ -103,15 +106,15 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
-      <Card className="w-full">
-        <CardHeader>
+    <div className="flex min-h-screen w-full items-center justify-center px-4 py-12">
+      <Card className="size-full max-w-md">
+        <CardHeader className="text-center">
           <CardTitle className="text-2xl">Reset Password</CardTitle>
           <CardDescription>Enter your new password below.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
@@ -122,7 +125,7 @@ function ResetPasswordForm() {
                       <FormControl>
                         <PasswordInput
                           id="password"
-                          placeholder="******"
+                          placeholder="Enter your new password"
                           autoComplete="new-password"
                           {...field}
                         />
@@ -142,7 +145,7 @@ function ResetPasswordForm() {
                       <FormControl>
                         <PasswordInput
                           id="confirmPassword"
-                          placeholder="******"
+                          placeholder="Confirm your new password"
                           autoComplete="new-password"
                           {...field}
                         />
@@ -153,7 +156,7 @@ function ResetPasswordForm() {
                 />
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full mt-6"
                   disabled={resetPasswordMutation.isPending}
                 >
                   {resetPasswordMutation.isPending ? (
@@ -168,9 +171,9 @@ function ResetPasswordForm() {
               </div>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             Remember your password?{" "}
-            <Link href="/signin" className="underline">
+            <Link href="/signin" className="underline hover:no-underline">
               Sign in
             </Link>
           </div>
@@ -182,16 +185,16 @@ function ResetPasswordForm() {
 
 function ResetPasswordFallback() {
   return (
-    <div className="flex flex-col min-h-[50vh] h-full w-full items-center justify-center px-4">
-      <Card className="w-full">
-        <CardHeader>
+    <div className="flex min-h-screen w-full items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
           <CardTitle className="text-2xl">Loading...</CardTitle>
           <CardDescription>
             Please wait while we load the reset password form.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center py-6">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         </CardContent>
