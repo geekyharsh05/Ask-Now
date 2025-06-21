@@ -59,7 +59,7 @@ export default function SignUpForm() {
       if (data.error) {
         form.setError("root", { message: data.error.message });
       } else {
-        router.push("/dashboard");
+        router.push("/check-email");
       }
     },
 
