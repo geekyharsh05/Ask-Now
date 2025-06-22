@@ -18,7 +18,6 @@ export default function ClientAppLayout({
 }) {
   const router = useRouter();
 
-  // Get current session and user data
   const { data: session, isLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -27,26 +26,23 @@ export default function ClientAppLayout({
     },
   });
 
-  const user = session?.data?.user as any; // Better auth user with additional fields
+  const user = session?.data?.user; // Better auth user with additional fields
   const isAuthenticated = !!session?.data?.session;
 
   useEffect(() => {
     if (!isLoading) {
-      // Redirect if not authenticated
       if (!isAuthenticated) {
         router.push("/signin");
         return;
       }
 
-      // Redirect if user is not a creator
       if (user?.role !== "CREATOR") {
-        router.push("/"); // Redirect to landing page
+        router.push("/");
         return;
-      }
+      } 
     }
   }, [isAuthenticated, user, isLoading, router]);
 
-  // Show loading while checking authentication
   if (isLoading) {
     return (
       <div className="dark min-h-screen bg-background">
@@ -72,7 +68,6 @@ export default function ClientAppLayout({
     );
   }
 
-  // Don't render anything while redirecting
   if (!isAuthenticated || user?.role !== "CREATOR") {
     return null;
   }

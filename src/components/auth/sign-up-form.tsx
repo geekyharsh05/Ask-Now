@@ -50,7 +50,7 @@ export default function SignUpForm() {
         password: data.password,
         name: data.name,
         role: data.role,
-      } as any);
+      });
       console.log(result);
       return result;
     },

@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
+import type { User } from "@/lib/auth";
 
 import {
   Form,
@@ -47,22 +48,23 @@ export default function SignInForm() {
       });
       return result;
     },
+
     onSuccess: (data) => {
       if (data.error) {
         form.setError("root", { message: data.error.message });
       } else {
-        // Check user role and redirect accordingly
-        const user = data.data?.user as any;
+        // Use the user data from the signin response
+        const user = data.data?.user as User; // Type assertion for additional fields
         if (user?.role === "CREATOR") {
           router.push("/dashboard");
         } else if (user?.role === "RESPONDENT") {
           router.push("/respondent");
         } else {
-          // Fallback to root page for role detection
           router.push("/");
         }
       }
     },
+
     onError: (error) => {
       form.setError("root", { message: error.message });
     },
