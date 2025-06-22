@@ -31,8 +31,7 @@ export default function Features() {
               <h3 className="text-sm font-medium">AI-Powered</h3>
             </div>
             <p className="text-sm">
-              Generate intelligent survey questions and get AI insights from
-              responses.
+              Generate intelligent survey questions with simple prompts.
             </p>
           </div>
           <div className="space-y-2">
