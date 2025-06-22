@@ -31,7 +31,6 @@ export const useGenerateAISurvey = () => {
     },
   });
 
-  // Wrapper function with toast.promise
   const generateSurveyWithToast = async (data: GenerateSurveyRequest) => {
     return toastActions.ai.generate(mutation.mutateAsync(data));
   };

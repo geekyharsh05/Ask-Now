@@ -21,26 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Sparkles,
   Loader2,
-  Wand2,
   Users,
   MessageSquare,
-  Target,
   Lightbulb,
-  CheckCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { useGenerateAISurvey } from "@/hooks/use-ai-survey";
 
 interface AIAssistantProps {
@@ -84,7 +73,6 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
   });
 
   const generateSurveyMutation = useGenerateAISurvey();
-  const watchedValues = watch();
 
   const onSubmit = async (data: AIFormData) => {
     try {
@@ -133,25 +121,6 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
     }
   };
 
-  const questionTypeExamples = [
-    {
-      type: "Multiple Choice",
-      icon: "📊",
-      description: "Select from predefined options",
-    },
-    {
-      type: "Text Response",
-      icon: "✍️",
-      description: "Open-ended written answers",
-    },
-    {
-      type: "Rating Scale",
-      icon: "⭐",
-      description: "Rate on a numerical scale",
-    },
-    { type: "Yes/No", icon: "✅", description: "Simple binary choices" },
-  ];
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -162,15 +131,12 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-6">
-          <DialogTitle className="flex items-center text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-purple-100 to-blue-100 mr-3">
-              <Wand2 className="h-6 w-6 text-purple-600" />
-            </div>
-            AI Survey Assistant
+          <DialogTitle className="flex justify-center text-2xl font-bold bg-clip-text text-transparent">
+            <span className="text-white">AI Survey Assistant</span>
           </DialogTitle>
           <DialogDescription className="text-base text-muted-foreground text-center">
-            Transform your ideas into professional surveys with AI-powered
-            question generation
+            Transform your ideas into professional surveys with <br />
+            <span className="text-white">AI-powered</span> question generation
           </DialogDescription>
         </DialogHeader>
 
@@ -196,15 +162,6 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Main Form Card */}
           <Card className="border-2 border-dashed">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl flex items-center">
-                <Target className="mr-2 h-5 w-5 text-purple-600" />
-                Survey Configuration
-              </CardTitle>
-              <CardDescription className="text-base">
-                Tell us about your survey and we'll create tailored questions
-              </CardDescription>
-            </CardHeader>
             <CardContent className="space-y-6">
               {/* Topic Input */}
               <div className="space-y-2">
@@ -280,16 +237,16 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="general public">
-                        🌍 General Public
+                        General Public
                       </SelectItem>
-                      <SelectItem value="customers">🛒 Customers</SelectItem>
-                      <SelectItem value="employees">👥 Employees</SelectItem>
-                      <SelectItem value="students">🎓 Students</SelectItem>
+                      <SelectItem value="customers">Customers</SelectItem>
+                      <SelectItem value="employees">Employees</SelectItem>
+                      <SelectItem value="students">Students</SelectItem>
                       <SelectItem value="professionals">
-                        💼 Professionals
+                        Professionals
                       </SelectItem>
-                      <SelectItem value="teenagers">🧑‍🎓 Teenagers</SelectItem>
-                      <SelectItem value="seniors">👴 Seniors</SelectItem>
+                      <SelectItem value="teenagers">Teenagers</SelectItem>
+                      <SelectItem value="seniors">Seniors</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

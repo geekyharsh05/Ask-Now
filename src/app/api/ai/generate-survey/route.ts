@@ -19,11 +19,8 @@ const SurveyGenerationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🤖 AI Survey Generation API called');
-    
-    // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
-      console.error('❌ OPENAI_API_KEY is not configured');
+      console.error('OPENAI_API_KEY is not configured');
       return NextResponse.json(
         { error: 'AI service is not configured. Please contact the administrator.' },
         { status: 500 }
@@ -32,17 +29,14 @@ export async function POST(request: NextRequest) {
 
     const { topic, numberOfQuestions = 5, targetAudience = 'general public', additionalContext } = await request.json();
     
-    console.log('📝 Request data:', { topic, numberOfQuestions, targetAudience, additionalContext });
-
     if (!topic) {
-      console.error('❌ Topic is required');
+      console.error('Topic is required');
       return NextResponse.json(
         { error: 'Topic is required' },
         { status: 400 }
       );
     }
 
-    console.log('🚀 Calling OpenAI API...');
 
     const prompt = `Create a comprehensive survey about "${topic}" with ${numberOfQuestions} questions for ${targetAudience}.
 
@@ -70,14 +64,9 @@ The survey should be professional and engaging for the target audience.`;
       prompt,
     });
 
-    console.log('✅ AI generation successful:', {
-      title: result.object.title,
-      questionsCount: result.object.questions.length,
-    });
-
     return NextResponse.json(result.object);
   } catch (error: any) {
-    console.error('❌ AI survey generation error:', error);
+    console.error('AI survey generation error:', error);
     
     // More specific error messages
     if (error.message?.includes('API key')) {
