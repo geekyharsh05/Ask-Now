@@ -363,6 +363,7 @@ export default function CreateSurveyPage() {
                 updateQuestion(question.id, { text: e.target.value })
               }
               placeholder="Enter your question..."
+              className='mt-2'
             />
           </div>
           <div>
@@ -377,6 +378,7 @@ export default function CreateSurveyPage() {
               }
               placeholder="Add additional context or instructions..."
               rows={2}
+              className="mt-2"
             />
           </div>
 
@@ -517,6 +519,7 @@ export default function CreateSurveyPage() {
                   id="title"
                   {...register("title", { required: "Title is required" })}
                   placeholder="Enter survey title..."
+                  className="mt-2"
                 />
                 {errors.title && (
                   <p className="text-sm text-red-600 mt-1">
@@ -531,6 +534,7 @@ export default function CreateSurveyPage() {
                   {...register("description")}
                   placeholder="Describe the purpose of your survey..."
                   rows={3}
+                  className="mt-2"
                 />
               </div>
             </CardContent>
@@ -644,6 +648,7 @@ export default function CreateSurveyPage() {
                     type="number"
                     {...register("maxResponses", { valueAsNumber: true })}
                     placeholder="No limit"
+                    className="mt-2"
                   />
                 </div>
               </CardContent>
