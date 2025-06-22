@@ -50,13 +50,14 @@ async function sendEmail({ to, subject, text, html }: IEmailProps) {
 
     return {
       success: true,
+      message: "Email sent successfully!",
       messageId: data?.id,
     };
   } catch (err) {
     console.error("Unexpected error sending email:", err);
     return {
       success: false,
-      message: "Unexpected error occurred.",
+      message: "Unexpected error occurred while sending email.",
     };
   }
 }

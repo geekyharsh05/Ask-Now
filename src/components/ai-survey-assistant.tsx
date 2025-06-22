@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useGenerateAISurvey } from "@/hooks/use-ai-survey";
 
 interface AIAssistantProps {
   onSurveyGenerated: (survey: {
@@ -65,36 +66,9 @@ interface AIFormData {
   additionalContext?: string;
 }
 
-// Mock hook for demonstration
-const useGenerateAISurvey = () => ({
-  mutateAsync: async (data: any) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    return {
-      title: `${data.topic} Survey`,
-      description: `A comprehensive survey about ${data.topic.toLowerCase()} designed for ${data.targetAudience}.`,
-      questions: Array.from({ length: data.numberOfQuestions }, (_, i) => ({
-        type: i % 3 === 0 ? "multiple_choice" : i % 3 === 1 ? "text" : "rating",
-        text: `Question ${i + 1} about ${data.topic}?`,
-        description: `This question helps us understand your perspective on ${data.topic.toLowerCase()}.`,
-        isRequired: true,
-        options:
-          i % 3 === 0
-            ? [
-                { text: "Excellent" },
-                { text: "Good" },
-                { text: "Fair" },
-                { text: "Poor" },
-              ]
-            : undefined,
-      })),
-    };
-  },
-  isPending: false,
-});
-
 export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -114,26 +88,35 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
 
   const onSubmit = async (data: AIFormData) => {
     try {
-      const result = await generateSurveyMutation.mutateAsync({
+      setApiError(null);
+
+      // Use the hook's built-in toast handling
+      const wrappedResult = await generateSurveyMutation.mutateAsync({
         topic: data.topic,
         numberOfQuestions: data.numberOfQuestions,
         targetAudience: data.targetAudience,
+        ...(data.additionalContext && {
+          additionalContext: data.additionalContext,
+        }),
       });
 
-      // Transform AI result to local format
+      // Unwrap the result from toast.promise
+      const result = await wrappedResult.unwrap();
+
+      // Transform the result to match the expected format
       const transformedSurvey = {
         title: result.title,
         description: result.description,
-        questions: result.questions.map((question, index) => ({
-          id: `ai-q-${Date.now()}-${index}`,
-          type: question.type,
-          text: question.text,
-          description: question.description,
-          isRequired: question.isRequired,
+        questions: result.questions.map((q: any, index: number) => ({
+          id: `ai-${index}`,
+          type: q.type,
+          text: q.text,
+          description: q.description,
+          isRequired: q.isRequired,
           order: index,
-          options: question.options?.map((option, optIndex) => ({
-            id: `ai-opt-${Date.now()}-${index}-${optIndex}`,
-            text: option.text,
+          options: q.options?.map((opt: any, optIndex: number) => ({
+            id: `opt-${index}-${optIndex}`,
+            text: opt.text,
             order: optIndex,
           })),
         })),
@@ -142,12 +125,11 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
       onSurveyGenerated(transformedSurvey);
       setIsOpen(false);
       reset();
-      toast.success(
-        "AI survey generated successfully! Review and customize as needed."
-      );
     } catch (error: any) {
       console.error("AI generation error:", error);
-      toast.error(error?.response?.data?.error || "Failed to generate survey");
+      const errorMessage =
+        error?.response?.data?.error || "Failed to generate survey";
+      setApiError(errorMessage);
     }
   };
 
@@ -173,9 +155,7 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-        >
+        <Button variant="outline">
           <Sparkles className="mr-2 h-4 w-4" />
           AI Assistant
         </Button>
@@ -193,6 +173,25 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
             question generation
           </DialogDescription>
         </DialogHeader>
+
+        {/* API Error Alert */}
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="text-red-500 mt-0.5">⚠️</div>
+              <div>
+                <h4 className="font-medium text-red-900">AI Service Error</h4>
+                <p className="text-sm text-red-700 mt-1">{apiError}</p>
+                {apiError.includes("not configured") && (
+                  <p className="text-xs text-red-600 mt-2">
+                    💡 <strong>For developers:</strong> Add your OPENAI_API_KEY
+                    to the environment variables to enable AI survey generation.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Main Form Card */}
@@ -319,7 +318,6 @@ export function AISurveyAssistant({ onSurveyGenerated }: AIAssistantProps) {
               </div>
             </CardContent>
           </Card>
-
 
           <DialogFooter className="pt-6 border-t">
             <Button

@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import HeroSection from "@/components/landing/hero-section";
+import FeaturesSection from "@/components/landing/features";
+import FAQs from "@/components/landing/faq";
 
 export default function Home() {
   const router = useRouter();
 
-  // Get current session
   const { data: session, isLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -23,7 +24,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      // Redirect authenticated users to their appropriate dashboard
       if (user.role === "CREATOR") {
         router.push("/dashboard");
       } else if (user.role === "RESPONDENT") {
@@ -32,15 +32,15 @@ export default function Home() {
     }
   }, [isAuthenticated, user, isLoading, router]);
 
-  // Show landing page for non-authenticated users
   if (!isAuthenticated) {
     return (
       <main>
         <HeroSection />
+        <FeaturesSection />
+        <FAQs />
       </main>
     );
   }
 
-  // Show nothing while redirecting authenticated users
   return null;
 }

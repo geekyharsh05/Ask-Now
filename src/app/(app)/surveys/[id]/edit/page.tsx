@@ -308,79 +308,92 @@ export default function EditSurveyPage({
   };
 
   const onSubmit = async (data: SurveyForm) => {
-    if (!surveyId) return;
+    if (!survey) return;
 
     setIsSaving(true);
+
     try {
-      // Update survey
-      const updateData: UpdateSurveyRequest = {
-        title: data.title,
-        description: data.description || undefined,
-        isPublic: data.isPublic,
-        allowAnonymous: data.allowAnonymous,
-        maxResponses: data.maxResponses || undefined,
-        startDate: data.startDate || undefined,
-        endDate: data.endDate || undefined,
+      const savePromise = async () => {
+        // Update survey basic info
+        await updateSurveyMutation.mutateAsync({
+          id: survey.id,
+          data: {
+            title: data.title,
+            description: data.description,
+            isPublic: data.isPublic,
+            allowAnonymous: data.allowAnonymous,
+            maxResponses: data.maxResponses,
+            startDate: data.startDate,
+            endDate: data.endDate,
+          },
+        });
+
+        // Handle questions
+        for (const question of questions) {
+          if (question.isNew) {
+            // Create new question
+            await createQuestionMutation.mutateAsync({
+              surveyId: survey.id,
+              data: {
+                type: question.type,
+                text: question.text,
+                description: question.description,
+                isRequired: question.isRequired,
+                order: question.order,
+                options:
+                  question.options?.map((opt) => ({
+                    text: opt.text,
+                    order: opt.order,
+                  })) || [],
+              },
+            });
+          } else if (typeof question.id === "number") {
+            // Update existing question
+            await updateQuestionMutation.mutateAsync({
+              id: question.id,
+              data: {
+                type: question.type,
+                text: question.text,
+                description: question.description,
+                isRequired: question.isRequired,
+                order: question.order,
+                options:
+                  question.options?.map((opt) => ({
+                    text: opt.text,
+                    order: opt.order,
+                  })) || [],
+              },
+            });
+          }
+        }
+
+        // Handle deleted questions
+        const currentQuestionIds = questions
+          .filter((q) => typeof q.id === "number")
+          .map((q) => q.id as number);
+        const existingQuestionIds =
+          survey.questions
+            ?.filter((q) => q.id !== undefined)
+            .map((q) => q.id as number) || [];
+        const deletedQuestionIds = existingQuestionIds.filter(
+          (id) => !currentQuestionIds.includes(id)
+        );
+
+        for (const questionId of deletedQuestionIds) {
+          await deleteQuestionMutation.mutateAsync(questionId);
+        }
       };
 
-      await updateSurveyMutation.mutateAsync({
-        id: surveyId,
-        data: updateData,
+      await toast.promise(savePromise(), {
+        loading: "💾 Saving survey changes...",
+        success: "✅ Survey updated successfully!",
+        error: "❌ Failed to update survey",
       });
 
-      // Handle questions
-      for (const question of questions) {
-        if (question.isNew) {
-          // Create new question
-          const questionData: CreateQuestionRequest = {
-            text: question.text,
-            description: question.description || undefined,
-            type: question.type,
-            isRequired: question.isRequired,
-            order: question.order,
-            options: question.options?.map((opt) => ({
-              text: opt.text,
-              order: opt.order,
-            })),
-          };
-          await createQuestionMutation.mutateAsync({
-            surveyId,
-            data: questionData,
-          });
-        } else {
-          // Update existing question
-          const questionData = {
-            text: question.text,
-            description: question.description || undefined,
-            type: question.type,
-            isRequired: question.isRequired,
-            order: question.order,
-          };
-          await updateQuestionMutation.mutateAsync({
-            id: question.id as number,
-            data: questionData,
-          });
-        }
-      }
-
-      // Delete questions that were removed
-      const existingQuestionIds = existingQuestions?.map((q) => q.id) || [];
-      const currentQuestionIds = questions
-        .filter((q) => !q.isNew)
-        .map((q) => q.id as number);
-      const deletedQuestionIds = existingQuestionIds.filter(
-        (id) => !currentQuestionIds.includes(id)
-      );
-
-      for (const questionId of deletedQuestionIds) {
-        await deleteQuestionMutation.mutateAsync(questionId);
-      }
-
-      toast.success("Survey updated successfully!");
       router.push("/surveys");
     } catch (error) {
       console.error("Error updating survey:", error);
-      toast.error("Failed to update survey");
+      // Error toast is handled by toast.promise
     } finally {
       setIsSaving(false);
     }

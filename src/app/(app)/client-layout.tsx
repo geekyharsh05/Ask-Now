@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Toaster } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +78,6 @@ export default function ClientAppLayout({
         <SidebarInset className="md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
           <main className="flex-1 p-1">{children}</main>
         </SidebarInset>
-        <Toaster />
       </SidebarProvider>
     </div>
   );

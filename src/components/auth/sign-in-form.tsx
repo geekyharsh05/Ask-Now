@@ -6,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { authClient, useSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import type { User } from "@/lib/auth";
+import { toast } from "sonner";
 
 import {
   Form,
@@ -42,11 +43,23 @@ export default function SignInForm() {
 
   const signInMutation = useMutation({
     mutationFn: async (data: SignInSchema) => {
-      const result = await authClient.signIn.email({
+      const signInPromise = authClient.signIn.email({
         email: data.email,
         password: data.password,
       });
-      return result;
+
+      toast.promise(signInPromise, {
+        loading: "Signing in...",
+        success: (result) => {
+          if (result.error) {
+            throw new Error(result.error.message);
+          }
+          return "Signed in successfully!";
+        },
+        error: (error) => error?.message || "Failed to sign in",
+      });
+
+      return await signInPromise;
     },
 
     onSuccess: (data) => {
@@ -146,6 +159,11 @@ export default function SignInForm() {
                     "Sign In"
                   )}
                 </Button>
+                {form.formState.errors.root && (
+                  <div className="text-sm text-red-600 text-center">
+                    {form.formState.errors.root.message}
+                  </div>
+                )}
               </div>
             </form>
           </Form>

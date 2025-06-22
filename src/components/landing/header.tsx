@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   { name: "Features", href: "#features" },
-  { name: "FAQ", href: "#faq" },
+  { name: "FAQ", href: "#faqs" },
 ];
 
 export const HeroHeader = () => {
@@ -22,6 +22,46 @@ export const HeroHeader = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleSmoothScroll = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenuState(false); // Close mobile menu
+
+    // Handle scroll to top for home link
+    if (href === "/" || href === "#top") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    const targetId = href.replace("#", "");
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      const headerOffset = 80; // Account for fixed header
+      const elementPosition = targetElement.getBoundingClientRect().top;
+      const offsetPosition =
+        elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Handle logo click to scroll to top
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (window.location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <header>
@@ -41,7 +81,8 @@ export const HeroHeader = () => {
               <Link
                 href="/"
                 aria-label="home"
-                className="flex items-center space-x-2"
+                onClick={handleLogoClick}
+                className="flex items-center space-x-2 cursor-pointer"
               >
                 <Logo />
               </Link>
@@ -62,7 +103,8 @@ export const HeroHeader = () => {
                   <li key={index}>
                     <Link
                       href={item.href}
-                      className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                      onClick={(e) => handleSmoothScroll(item.href, e)}
+                      className="text-muted-foreground hover:text-accent-foreground block duration-150 cursor-pointer"
                     >
                       <span>{item.name}</span>
                     </Link>
@@ -78,7 +120,8 @@ export const HeroHeader = () => {
                     <li key={index}>
                       <Link
                         href={item.href}
-                        className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                        onClick={(e) => handleSmoothScroll(item.href, e)}
+                        className="text-muted-foreground hover:text-accent-foreground block duration-150 cursor-pointer"
                       >
                         <span>{item.name}</span>
                       </Link>

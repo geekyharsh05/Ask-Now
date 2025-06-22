@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 import {
   Form,
@@ -45,14 +46,25 @@ export default function SignUpForm() {
 
   const signUpMutation = useMutation({
     mutationFn: async (data: SignUpSchema) => {
-      const result = await authClient.signUp.email({
+      const signUpPromise = authClient.signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
         role: data.role,
       });
-      console.log(result);
-      return result;
+
+      toast.promise(signUpPromise, {
+        loading: "Creating account...",
+        success: (result) => {
+          if (result.error) {
+            throw new Error(result.error.message);
+          }
+          return "Account created successfully! Please check your email to verify.";
+        },
+        error: (error) => error?.message || "Failed to create account",
+      });
+
+      return await signUpPromise;
     },
 
     onSuccess: (data) => {

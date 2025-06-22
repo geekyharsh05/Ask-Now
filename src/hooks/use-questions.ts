@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { Question, CreateQuestionRequest } from '@/types';
 import { surveyKeys } from './use-surveys';
+import { toastActions } from '@/lib/toast-utils';
 
 // Query keys for consistent cache management
 export const questionKeys = {
@@ -42,7 +42,7 @@ export function useQuestion(id: number) {
 export function useCreateQuestion() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ surveyId, data }: { surveyId: number; data: CreateQuestionRequest }) => 
       apiClient.questions.createQuestion(surveyId, data),
     onSuccess: (newQuestion, { surveyId }) => {
@@ -61,20 +61,24 @@ export function useCreateQuestion() {
       // Invalidate survey data since question count changed
       queryClient.invalidateQueries({ queryKey: surveyKeys.detail(surveyId) });
       queryClient.invalidateQueries({ queryKey: surveyKeys.my() });
-      
-      toast.success('Question created successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create question');
     },
   });
+
+  const createQuestionWithToast = async (params: { surveyId: number; data: CreateQuestionRequest }) => {
+      return toastActions.question.create(mutation.mutateAsync(params));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: createQuestionWithToast,
+  };
 }
 
 // Update question mutation
 export function useUpdateQuestion() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: CreateQuestionRequest }) => 
       apiClient.questions.updateQuestion(id, data),
     onSuccess: (updatedQuestion) => {
@@ -94,20 +98,25 @@ export function useUpdateQuestion() {
       
       // Invalidate survey data
       queryClient.invalidateQueries({ queryKey: surveyKeys.detail(surveyId) });
-      
-      toast.success('Question updated successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update question');
     },
   });
+
+  // Wrapper function with toast.promise
+  const updateQuestionWithToast = async (params: { id: number; data: CreateQuestionRequest }) => {
+    return toastActions.question.update(mutation.mutateAsync(params));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: updateQuestionWithToast,
+  };
 }
 
 // Delete question mutation
 export function useDeleteQuestion() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: number) => apiClient.questions.deleteQuestion(id),
     onSuccess: (_, deletedId) => {
       // Remove question from cache
@@ -127,20 +136,25 @@ export function useDeleteQuestion() {
         queryClient.invalidateQueries({ queryKey: surveyKeys.detail(surveyId) });
         queryClient.invalidateQueries({ queryKey: surveyKeys.my() });
       }
-      
-      toast.success('Question deleted successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete question');
     },
   });
+
+  // Wrapper function with toast.promise
+  const deleteQuestionWithToast = async (id: number) => {
+    return toastActions.question.delete(mutation.mutateAsync(id));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: deleteQuestionWithToast,
+  };
 }
 
 // Add option to question mutation
 export function useAddOptionToQuestion() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ questionId, optionText }: { questionId: number; optionText: string }) => 
       apiClient.questions.addOptionToQuestion(questionId, optionText),
     onSuccess: (newOption, { questionId }) => {
@@ -152,11 +166,16 @@ export function useAddOptionToQuestion() {
       if (questionData) {
         queryClient.invalidateQueries({ queryKey: questionKeys.bySurvey(questionData.surveyId) });
       }
-      
-      toast.success('Option added successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add option');
     },
   });
+
+  // Wrapper function with toast.promise
+  const addOptionWithToast = async (params: { questionId: number; optionText: string }) => {
+    return toastActions.question.addOption(mutation.mutateAsync(params));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: addOptionWithToast,
+  };
 } 

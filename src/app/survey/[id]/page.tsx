@@ -76,15 +76,6 @@ export default function SurveyPage({ params }: SurveyPageProps) {
     mutationFn: async (responseData: any) => {
       return await apiClient.responses.submitResponse(surveyId, responseData);
     },
-    onSuccess: () => {
-      toast.success("Response submitted successfully!");
-      router.push("/respondent");
-    },
-    onError: (error: any) => {
-      toast.error(
-        "Failed to submit response: " + (error.message || "Unknown error")
-      );
-    },
   });
 
   if (!resolvedParams) {
@@ -218,9 +209,17 @@ export default function SurveyPage({ params }: SurveyPageProps) {
         answers: formattedAnswers,
       };
 
-      await submitResponseMutation.mutateAsync(responseData);
+      await toast.promise(submitResponseMutation.mutateAsync(responseData), {
+        loading: "📝 Submitting your response...",
+        success: "✅ Response submitted successfully!",
+        error: (error: any) =>
+          "❌ Failed to submit response: " + (error.message || "Unknown error"),
+      });
+
+      router.push("/respondent");
     } catch (error) {
       console.error("Submit error:", error);
+      // Error toast is handled by toast.promise
     } finally {
       setIsSubmitting(false);
     }

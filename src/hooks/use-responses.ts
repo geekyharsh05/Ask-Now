@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { apiClient } from '@/lib/api-client';
-import { SurveyResponse, SubmitResponseRequest } from '@/types';
+  import { apiClient } from '@/lib/api-client';
+import { SubmitResponseRequest } from '@/types';
+import { toastActions } from '@/lib/toast-utils';
 
 // Query keys for consistent cache management
 export const responseKeys = {
@@ -68,7 +68,7 @@ export function useAnswersByQuestion(questionId: number) {
 export function useSubmitResponse() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ surveyId, data }: { surveyId: number; data: SubmitResponseRequest }) => 
       apiClient.responses.submitResponse(surveyId, data),
     onSuccess: (newResponse, { surveyId }) => {
@@ -79,13 +79,17 @@ export function useSubmitResponse() {
       
       // Add the new response to the cache
       queryClient.setQueryData(responseKeys.detail(newResponse.id), newResponse);
-      
-      toast.success('Response submitted successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit response');
     },
   });
+
+  const submitResponseWithToast = async (params: { surveyId: number; data: SubmitResponseRequest }) => {
+    return toastActions.response.submit(mutation.mutateAsync(params));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: submitResponseWithToast,
+  };
 }
 
 // Get response statistics for dashboard

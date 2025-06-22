@@ -16,6 +16,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +116,7 @@ export function AppSidebar() {
               tooltip="Ask Now - Survey Platform"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <FileText className="h-6 w-6" /> 
+                <FileText className="h-6 w-6" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold">Ask Now</span>
@@ -217,14 +219,17 @@ export function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={() => router.push("/profile")}>
-                  <Users className="mr-2 size-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/settings")}>
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </DropdownMenuItem>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col gap-0.5 leading-none">
+                    <span className="truncate font-semibold">
+                      {user?.name || "User"}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user?.email || "user@example.com"}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={logoutMutation.isPending}

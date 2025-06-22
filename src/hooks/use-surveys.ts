@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { CreateSurveyRequest, UpdateSurveyRequest, Survey } from '@/types';
+import { toastActions } from '@/lib/toast-utils';
 
 // Query keys for consistent cache management
 export const surveyKeys = {
   all: ['surveys'] as const,
-  lists: () => [...surveyKeys.all, 'list'] as const,
+  lists: () => [...surveyKeys.all, 'list'] as const,  
   list: (filters: Record<string, any>) => [...surveyKeys.lists(), { filters }] as const,
   details: () => [...surveyKeys.all, 'detail'] as const,
   detail: (id: number) => [...surveyKeys.details(), id] as const,
@@ -55,7 +55,7 @@ export function useSurvey(id: number) {
 export function useCreateSurvey() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (data: CreateSurveyRequest) => apiClient.surveys.createSurvey(data),
     onSuccess: (newSurvey) => {
       // Invalidate and refetch surveys
@@ -64,20 +64,26 @@ export function useCreateSurvey() {
       
       // Add the new survey to the cache
       queryClient.setQueryData(surveyKeys.detail(newSurvey.id), newSurvey);
-      
-      toast.success('Survey created successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create survey');
     },
   });
+
+  // Wrapper function with toast.promise
+  const createSurveyWithToast = async (data: CreateSurveyRequest) => {
+    return toastActions.survey.create(mutation.mutateAsync(data));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: createSurveyWithToast,
+    mutateAsyncRaw: mutation.mutateAsync, // Direct access to unwrapped mutation
+  };
 }
 
 // Update survey mutation
 export function useUpdateSurvey() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateSurveyRequest }) => 
       apiClient.surveys.updateSurvey(id, data),
     onSuccess: (updatedSurvey) => {
@@ -91,20 +97,24 @@ export function useUpdateSurvey() {
           survey.id === updatedSurvey.id ? updatedSurvey : survey
         );
       });
-      
-      toast.success('Survey updated successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update survey');
     },
   });
+
+  const updateSurveyWithToast = async (params: { id: number; data: UpdateSurveyRequest }) => {
+    return toastActions.survey.update(mutation.mutateAsync(params));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: updateSurveyWithToast,
+  };
 }
 
 // Delete survey mutation
 export function useDeleteSurvey() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: number) => apiClient.surveys.deleteSurvey(id),
     onSuccess: (_, deletedId) => {
       // Remove survey from cache
@@ -118,20 +128,25 @@ export function useDeleteSurvey() {
       
       // Invalidate count
       queryClient.invalidateQueries({ queryKey: surveyKeys.count() });
-      
-      toast.success('Survey deleted successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete survey');
     },
   });
+
+  // Wrapper function with toast.promise
+  const deleteSurveyWithToast = async (id: number) => {
+    return toastActions.survey.delete(mutation.mutateAsync(id));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: deleteSurveyWithToast,
+  };
 }
 
 // Publish survey mutation
 export function usePublishSurvey() {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: number) => apiClient.surveys.publishSurvey(id),
     onSuccess: (publishedSurvey) => {
       // Update the specific survey in cache
@@ -147,11 +162,15 @@ export function usePublishSurvey() {
       
       // Invalidate public surveys since this survey might now be public
       queryClient.invalidateQueries({ queryKey: surveyKeys.public() });
-      
-      toast.success('Survey published successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to publish survey');
     },
   });
+
+  const publishSurveyWithToast = async (id: number) => {
+    return toastActions.survey.publish(mutation.mutateAsync(id));
+  };
+
+  return {
+    ...mutation,
+    mutateAsync: publishSurveyWithToast,
+  };
 } 

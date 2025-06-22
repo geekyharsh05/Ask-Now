@@ -19,19 +19,32 @@ const SurveyGenerationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, numberOfQuestions = 5, targetAudience = 'general public' } = await request.json();
+    console.log('🤖 AI Survey Generation API called');
+    
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('❌ OPENAI_API_KEY is not configured');
+      return NextResponse.json(
+        { error: 'AI service is not configured. Please contact the administrator.' },
+        { status: 500 }
+      );
+    }
+
+    const { topic, numberOfQuestions = 5, targetAudience = 'general public', additionalContext } = await request.json();
+    
+    console.log('📝 Request data:', { topic, numberOfQuestions, targetAudience, additionalContext });
 
     if (!topic) {
+      console.error('❌ Topic is required');
       return NextResponse.json(
         { error: 'Topic is required' },
         { status: 400 }
       );
     }
 
-    const result = await generateObject({
-      model: openai('gpt-4o-mini'),
-      schema: SurveyGenerationSchema,
-      prompt: `Create a comprehensive survey about "${topic}" with ${numberOfQuestions} questions for ${targetAudience}.
+    console.log('🚀 Calling OpenAI API...');
+
+    const prompt = `Create a comprehensive survey about "${topic}" with ${numberOfQuestions} questions for ${targetAudience}.
 
 Requirements:
 - Generate a compelling title and description for the survey
@@ -45,15 +58,51 @@ Requirements:
 Topic: ${topic}
 Target Audience: ${targetAudience}
 Number of Questions: ${numberOfQuestions}
+${additionalContext ? `Additional Context: ${additionalContext}` : ''}
 
-The survey should be professional and engaging for the target audience.`,
+The survey should be professional and engaging for the target audience.`;
+
+    console.log('📋 Generated prompt length:', prompt.length);
+
+    const result = await generateObject({
+      model: openai('gpt-4o-mini'),
+      schema: SurveyGenerationSchema,
+      prompt,
+    });
+
+    console.log('✅ AI generation successful:', {
+      title: result.object.title,
+      questionsCount: result.object.questions.length,
     });
 
     return NextResponse.json(result.object);
-  } catch (error) {
-    console.error('AI survey generation error:', error);
+  } catch (error: any) {
+    console.error('❌ AI survey generation error:', error);
+    
+    // More specific error messages
+    if (error.message?.includes('API key')) {
+      return NextResponse.json(
+        { error: 'Invalid API key. Please contact the administrator.' },
+        { status: 500 }
+      );
+    }
+    
+    if (error.message?.includes('quota')) {
+      return NextResponse.json(
+        { error: 'AI service quota exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+    
+    if (error.message?.includes('timeout')) {
+      return NextResponse.json(
+        { error: 'AI service timeout. Please try again.' },
+        { status: 408 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to generate survey. Please try again.' },
+      { error: 'Failed to generate survey. Please try again later.' },
       { status: 500 }
     );
   }

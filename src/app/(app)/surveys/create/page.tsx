@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -31,7 +30,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Plus,
-  Settings,
   Eye,
   Save,
   Trash2,
@@ -43,25 +41,14 @@ import {
   Hash,
   Mail,
   Star,
-  MoreHorizontal,
-  Globe,
-  Lock,
-  Users,
   Loader2,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCreateSurvey, useUpdateSurvey } from "@/hooks/use-surveys";
 import { useCreateQuestion } from "@/hooks/use-questions";
@@ -145,7 +132,6 @@ export default function CreateSurveyPage() {
       options?: { id: string; text: string; order: number }[];
     }>;
   }) => {
-    // Populate form with AI-generated data
     setValue("title", aiSurvey.title);
     setValue("description", aiSurvey.description);
 
@@ -244,7 +230,7 @@ export default function CreateSurveyPage() {
   ) => {
     for (const questionData of questions) {
       try {
-        await createQuestionMutation.mutateAsync({
+        createQuestionMutation.mutate({
           surveyId,
           data: questionData,
         });
@@ -274,14 +260,14 @@ export default function CreateSurveyPage() {
         endDate: data.endDate || undefined,
       };
 
-      // Create the survey first
-      const createdSurvey = await createSurveyMutation.mutateAsync(surveyData);
+      // Create the survey and get the result
+      const createdSurvey =
+        await createSurveyMutation.mutateAsyncRaw(surveyData);
+      toast.success("Survey created successfully!");
 
       // Transform and create questions
       const apiQuestions = transformQuestionsToAPI(questions);
       await createQuestionsForSurvey(createdSurvey.id, apiQuestions);
-
-      toast.success("Survey created successfully!");
       router.push("/surveys");
     } catch (error: any) {
       console.error("Survey creation error:", error);
@@ -314,16 +300,16 @@ export default function CreateSurveyPage() {
         endDate: formData.endDate || undefined,
       };
 
-      // Create the survey as draft
-      const createdSurvey = await createSurveyMutation.mutateAsync(surveyData);
+      // Create the survey as draft and get the result
+      const createdSurvey =
+        await createSurveyMutation.mutateAsyncRaw(surveyData);
+      toast.success("Draft saved successfully!");
 
       // If there are questions, create them too
       if (questions.length > 0) {
         const apiQuestions = transformQuestionsToAPI(questions);
         await createQuestionsForSurvey(createdSurvey.id, apiQuestions);
       }
-
-      toast.success("Draft saved successfully!");
       router.push("/surveys");
     } catch (error: any) {
       console.error("Draft save error:", error);
