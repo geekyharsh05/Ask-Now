@@ -1,100 +1,265 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ask Now - AI-Powered Survey Platform
 
-## Getting Started
+> A modern, feature-rich survey platform with AI-powered survey generation, real-time analytics, and comprehensive response management.
 
-First, run the development server:
+## 🌟 Features
+
+### Core Survey Features
+
+- **Survey Creation & Management**: Create, edit, and manage surveys with multiple question types
+- **AI-Powered Survey Generation**: Generate professional surveys automatically using OpenAI GPT-4o-mini
+- **Question Types Support**:
+  - Text input
+  - Multiple choice
+  - Radio buttons
+  - Checkboxes
+  - Rating scales
+  - Date picker
+  - Email validation
+  - Number input
+
+### Advanced Capabilities
+
+- **Public & Private Surveys**: Control survey visibility and access
+- **Anonymous Responses**: Allow anonymous participation for sensitive topics
+- **Real-time Analytics**: View response statistics and survey performance
+- **Response Management**: Track, view, and analyze survey responses
+- **User Role Management**: Creator and Respondent roles with appropriate permissions
+
+### User Experience
+
+- **Modern UI**: Built with shadcn/ui components and Tailwind CSS
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Dark/Light Mode**: Theme switching support
+- **Email Verification**: Secure user registration with email verification
+- **Password Reset**: Complete password recovery workflow
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- **Next.js 15** - React framework with App Router
+- **React 19** - Latest React with modern features
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Beautiful, accessible UI components
+- **Lucide React** - Icon library
+- **Framer Motion** - Animations and transitions
+
+### Backend & Database
+
+- **PostgreSQL** - Primary database
+- **Prisma** - Database ORM and migrations
+- **Better Auth** - Authentication and session management
+- **Resend** - Email delivery service
+
+### AI & Analytics
+
+- **OpenAI API** - AI survey generation (GPT-4o-mini)
+- **Vercel AI SDK** - AI integration toolkit
+### Development Tools
+
+- **Bun** - Fast JavaScript runtime and package manager
+- **React Query (TanStack)** - Data fetching and state management
+- **React Hook Form** - Form handling and validation
+- **Zod** - Schema validation
+- **Axios** - HTTP client
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ or Bun
+- PostgreSQL database
+- OpenAI API key (for AI features)
+- Resend API key (for emails)
+
+### 1. Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/fe-surveyer.git
+cd fe-surveyer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-# FE Surveyer
-
-## Toast Notifications
-
-This application uses [Sonner](https://sonner.emilkowal.ski/) for toast notifications across all user actions. The implementation provides consistent user feedback for all operations:
-
-### Toast Types Implemented
-
-1. **Promise-based Toasts (`toast.promise`)** - For async operations with loading states:
-
-   - AI survey generation
-   - Survey response submission
-   - Survey creation and updates
-   - Email sending operations
-
-2. **Success Toasts (`toast.success`)** - For successful operations:
-
-   - Survey operations (create, update, delete, publish)
-   - Question management (create, update, delete)
-   - Response submissions
-   - File exports
-
-3. **Error Toasts (`toast.error`)** - For failed operations:
-   - API errors with detailed messages
-   - Validation errors
-   - Network failures
-
-### Key Features
-
-- **Loading states**: Visual feedback during async operations
-- **Error handling**: Consistent error messages across the app
-- **Success confirmation**: Clear feedback when operations complete
-- **Contextual messages**: Specific messages for different operations
-- **User-friendly**: Emojis and clear language for better UX
-
-### Implementation Coverage
-
-All major user actions now have toast notifications:
-
-- ✅ Survey management (CRUD operations)
-- ✅ Question management
-- ✅ Response handling
-- ✅ AI survey generation
-- ✅ Authentication flows
-- ✅ File operations
-- ✅ Email notifications
-
-### Usage Examples
-
-```typescript
-// Promise-based toast for async operations
-await toast.promise(someAsyncOperation(), {
-  loading: "🔄 Processing...",
-  success: "✅ Operation completed!",
-  error: "❌ Operation failed",
-});
-
-// Simple success toast
-toast.success("Survey created successfully!");
-
-// Error toast with details
-toast.error(error?.message || "Something went wrong");
+```bash
+bun install
 ```
+
+### 3. Environment Setup
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/surveyer"
+
+# Authentication
+BETTER_AUTH_SECRET="your-secret-key-here"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# OpenAI (for AI survey generation)
+OPENAI_API_KEY="your-openai-api-key"
+
+# Email (Resend)
+RESEND_API_KEY="your-resend-api-key"
+RESEND_FROM_EMAIL="noreply@yourdomain.com"
+
+# App Configuration
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### 4. Database Setup
+
+```bash
+# Generate Prisma client
+bun run db:generate
+
+# Run database migrations
+bun run db:migrate
+
+# (Optional) Open Prisma Studio to view your database
+bun run db:studio
+```
+
+### 5. Start Development Server
+
+```bash
+bun run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to see your application.
+
+## 📁 Project Structure
+
+```
+fe-surveyer/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (app)/              # Authenticated app routes
+│   │   │   ├── dashboard/      # User dashboard
+│   │   │   ├── surveys/        # Survey management
+│   │   │   └── responses/      # Response management
+│   │   ├── (auth)/             # Authentication routes
+│   │   ├── api/                # API routes
+│   │   └── survey/             # Public survey taking
+│   ├── components/             # Reusable components
+│   │   ├── ui/                 # shadcn/ui components
+│   │   ├── auth/               # Authentication forms
+│   │   └── landing/            # Landing page components
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Utility libraries
+│   │   ├── dal/                # Data access layer
+│   │   └── email-templates/    # Email templates
+│   └── types/                  # TypeScript definitions
+├── prisma/                     # Database schema and migrations
+└── public/                     # Static assets
+```
+
+## 🔧 Available Scripts
+
+```bash
+# Development
+bun run dev          # Start development server with Turbopack
+bun run build        # Build for production
+bun run start        # Start production server
+bun run lint         # Run ESLint
+
+# Database
+bun run db:generate  # Generate Prisma client
+bun run db:migrate   # Run database migrations
+bun run db:push      # Push schema changes to database
+bun run db:studio    # Open Prisma Studio
+```
+
+## 🎯 Usage Guide
+
+### Creating Your First Survey
+
+1. **Sign Up/Sign In**: Create an account or sign in to get started
+2. **Dashboard**: Access your dashboard to view survey overview
+3. **Create Survey**: Click "Create Survey" and choose:
+   - Manual creation with custom questions
+   - AI-assisted generation with topic and requirements
+4. **Configure Questions**: Add various question types and configure options
+5. **Publish**: Make your survey live and shareable
+
+### AI Survey Generation
+
+1. Click "AI Assistant" when creating a survey
+2. Provide:
+   - Survey topic
+   - Number of questions (1-20)
+   - Target audience
+   - Additional context (optional)
+3. Review and customize the generated questions
+4. Publish your AI-generated survey
+
+### Managing Responses
+
+1. **View Analytics**: Real-time response statistics and trends
+2. **Response Details**: Individual response analysis
+3. **Export Data**: Download responses for further analysis
+4. **Anonymous Tracking**: Support for anonymous submissions
+
+## 🔐 Authentication & Security
+
+- **Secure Registration**: Email verification required
+- **Password Security**: Bcrypt hashing with salt
+- **Session Management**: Secure session handling with Better Auth
+- **Role-based Access**: Creator and Respondent permissions
+- **CSRF Protection**: Built-in protection against cross-site attacks
+
+## 🌐 API Endpoints
+
+### Surveys
+
+- `GET /api/surveys` - List surveys
+- `POST /api/surveys` - Create survey
+- `GET /api/surveys/[id]` - Get survey details
+- `PUT /api/surveys/[id]` - Update survey
+- `DELETE /api/surveys/[id]` - Delete survey
+- `POST /api/surveys/[id]/publish` - Publish survey
+
+### Responses
+
+- `GET /api/responses/survey/[surveyId]` - Get survey responses
+- `POST /api/responses/submit` - Submit response
+- `GET /api/responses/[id]` - Get specific response
+
+### AI Generation
+
+- `POST /api/ai/generate-survey` - Generate survey with AI
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/your-username/fe-surveyer/issues) page
+2. Create a new issue with detailed information
+3. Join our community discussions
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) for the amazing React framework
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components
+- [Prisma](https://prisma.io/) for excellent database tooling
+- [OpenAI](https://openai.com/) for AI capabilities
+- [Vercel](https://vercel.com/) for hosting and AI SDK
+
+---
+
+Built with ❤️ using Next.js and modern web technologies.
