@@ -2,6 +2,8 @@
 
 > A modern, feature-rich survey platform with AI-powered survey generation, real-time analytics, and comprehensive response management.
 
+[![Watch the Demo](https://img.youtube.com/vi/MtU-7wTtT4A/maxresdefault.jpg)](https://www.youtube.com/watch?v=MtU-7wTtT4A)
+
 ## 🌟 Features
 
 ### Core Survey Features
